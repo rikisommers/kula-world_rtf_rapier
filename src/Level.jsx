@@ -38,29 +38,21 @@ export default function Level({
 
   const positions = [
     /// Level 1
-
     // x y z
     [0, -1, 0, "start"], 
     [0, -1, -1, "cube"],
     [0, -1, -2, "cube"],
-    [0, -1, -3, "cube"],
-
-  
-
-  
+    [0, -1, -3, "cube"],  
 
     [1, -1, 0, "cube"],
     [1, -1, -1, "cube"],
     [1, -1, -2, "cube"],
     [1, -1, -3, "cube"],
     
-  
-
     [2, -1, 0, "cube"],
     [2, -1, -1, "cube"],
     [2, -1, -2, "cube"],
     [2, -1, -3, "cube"],
-
 
     [-1, -1, 0, "cube"],
     [-1, -1, -1, "cube"],
@@ -71,6 +63,14 @@ export default function Level({
     [-2, -1, -1, "cube"],
     [-2, -1, -2, "cube"],
     [-2, -1, -3, "cube"], 
+
+
+    [0, 2, -4, "cube"],
+     [0, 1, -4, "cube"],
+     [0, 0, -4, "cube"],
+    [1, 2, -4, "cube"],
+     [1, 1, -4, "cube"],
+     [1, 0, -4, "cube"],
 
   ];
 
@@ -84,6 +84,8 @@ export default function Level({
       playerPosition.z.toFixed(2)
     );
     cgd(playerDirection, playerPosition);
+
+   // console.log('rounded position:', roundedPosition)
   }, [playerPosition]);
 //gameGravityDirection
 
@@ -192,7 +194,9 @@ export default function Level({
     <primitive object={timer.scene} /> */}
       {/* <Background /> */}
       <group ref={level}>
+        
         {positions.map((position, index) => (
+
           <RigidBody
             key={index}
             type="fixed"

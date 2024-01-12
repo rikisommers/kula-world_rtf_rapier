@@ -8,6 +8,7 @@ import { playFall, playLand, playStart } from "./Audio.jsx";
 import { gravityDirectionDict } from "./stores/useGame.jsx";
 import { gsap } from "gsap";
 
+import { useControls } from 'leva'
 
 const directionMap = {
   0: "forward",
@@ -28,22 +29,59 @@ export default function Player({
 
   //console.log(blocks)
 
-  
+  const [blockPositions, setBlockPositions] = useState(0);
+  const gravityDirection = useGame((state) => state.gravityDirection);
+  const setGravityDirection = useGame((state) => state.setGravityDirection);
+  const gameGravityDirection = useGame((state) => state.gravityDirection);
+
+  const gravityDirectionDict = {
+    top: [0, -10, 0], // Top face
+    bottom: [0, 10, 0], // Bottom face
+    right: [-10, 0, 0], // Right face
+    left: [10, 0, 0], // Left face
+    front: [0, 0, 10], // Front face
+    back: [0, 0, -10], // Back face
+  }
+
+  const [gamerGD, setGamGD] = useState(gravityDirectionDict.top);
+
+
+
   useEffect(() => {
-    // Access positions array here and do something with it
-   // console.log('Block positions:', positions);
+      // Access positions array here and do something with it
+      //console.log('Block positions:', positions);
+
+      // Array to store merged Vector3 values
+      const mergedPositions = [];
+
+      // Loop through positions and merge into a single array
+      positions.forEach(position => {
+        const vector3 = new THREE.Vector3(position[0], position[1], position[2]);
+        mergedPositions.push(vector3);
+      });
+
+      setBlockPositions(mergedPositions)
+      // Now mergedPositions contains all Vector3 values as a single array
+     // console.log('new position',mergedPositions);
+
+      // positions.forEach(position => {
+      //   const vector3 = new THREE.Vector3(position[0], position[1], position[2]);
+      //   // Now vector3 contains the x, y, and z coordinates for the current position
+      //   console.log(vector3);
+      // });
+
   }, [positions]);
+
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
   const restart = useGame((state) => state.restart);
   const blocksCount = useGame((state) => state.blocksCount);
   const [orientation, setOrientation] = useState(Math.PI);
 
-
   const playerMovementTop = useGame((state) => state.playerMovementTop);
 
   const [subscribeKeys, getKeys] = useKeyboardControls();
-const [isKeyPressed, setIsKeyPressed] = useState(false);
+  const [isKeyPressed, setIsKeyPressed] = useState(false);
 
   const { rapier, world } = useRapier();
   const body = useRef();
@@ -73,27 +111,15 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
   ];
 
 
-  
   useEffect(() => {
     const direction = directionMap[cameraStateIndex];
-    
     //send updated direction to level -- not required??
     onPlayerDirectionChange(direction);
-
     // rotate camera around player pos
     setCamPosition(cameraDirectionsTop[cameraStateIndex]);
     //setPlayerMove(playerMovementTop[cameraStateIndex]);
-
-
-    console.log('csi',  direction);
-
-
-    
+   // console.log('csi',  direction);
   }, [cameraStateIndex]);
-
-  
-
-
 
 
   const jump = () => {
@@ -114,9 +140,8 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
 
   const setPlayerMove = useCallback(() => {
 
-    console.log('moving')
 
-  
+   
     // const impulseDirection = new THREE.Vector3(0, 0, -1);
     // impulseDirection.applyQuaternion(player.current.quaternion);
   
@@ -129,18 +154,38 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
     // });
    
     const moveDirection = new THREE.Vector3(0, 0, -1);
-    moveDirection.applyQuaternion(player.current.quaternion);
+    moveDirection.applyQuaternion(player.current.quaternion).normalize();
   
-    const moveDistance = 0.1; // Adjust the distance of movement as needed
+    const moveDistance = 1; // Adjust the distance of movement as needed
+    const moveSpeed = 0.1; // Adjust the speed of movement as needed
 
-    const currentPosition = body.current.translation();
-    const newPosition = {
-      x: currentPosition.x + moveDirection.x * moveDistance,
-      y: currentPosition.y + moveDirection.y * moveDistance,
-      z: currentPosition.z + moveDirection.z * moveDistance,
-    };
+  const currentPosition = body.current.translation();
+  const newPosition = {
+    x: currentPosition.x + moveDirection.x * moveSpeed * moveDistance,
+    y: currentPosition.y + moveDirection.y * moveSpeed * moveDistance,
+    z: currentPosition.z + moveDirection.z * moveSpeed * moveDistance,
+  };
+
+    //console.log('moving')
+    //console.log('newPosition',newPosition)
+   // console.log('newPosition',newPosition)
+
     
     body.current.setTranslation(newPosition);
+
+    const smoothedPosition = {
+      x: Math.round(newPosition.x),
+      y: Math.round(newPosition.y),
+      z: Math.round(newPosition.z),
+    };
+    //body.current.setTranslation(newPosition);
+
+    //console.log('smoothed postion',smoothedPosition)
+    // newPosition.x += Math.ceil(moveDirection.x * moveSpeed * moveDistance / cubeWidth) * cubeWidth;
+    // newPosition.y += Math.ceil(moveDirection.y * moveSpeed * moveDistance / cubeWidth) * cubeWidth;
+    // newPosition.z += Math.ceil(moveDirection.z * moveSpeed * moveDistance / cubeWidth) * cubeWidth;
+
+    
   }, []);
 
 
@@ -199,7 +244,10 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
 
 
 
-
+ const color = useControls({
+      directional_color: '#00ff9f',
+      ambient_color: '#7600ff',
+    })
   const reset = () => {
     console.log("reset");
   };
@@ -230,7 +278,7 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
       (value) => {
         if (value) {
           setMovementState(MovementState.FORWARD);
-           console.log("direction:", movementState);
+        //   console.log("direction:", movementState);
         }
       }
     );
@@ -329,7 +377,25 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
     }
   }, [isKeyPressed, movementState]);
 
-  useFrame((state, delta) => {
+
+  const [isHitWall,setHitWall] = useState('red');
+  const [isHitEdge,setHitEdge] = useState('red');
+
+
+  const colorHit = useControls({
+    hit_wall: isHitWall,
+    hit_edge: isHitEdge,
+  })
+
+
+
+  // const raycasterDown = new THREE.Raycaster();
+  // const raycasterForward = new THREE.Raycaster();
+
+
+
+
+useFrame((state, delta) => {
     const { forward , leftward, rightward} = getKeys();
     const playerPosition = player.current?.position;
     const bodyPosition = body.current?.translation();
@@ -338,11 +404,41 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
 
 
 
-
+    const currentPosition = body.current.translation();
+      const newPosition = {
+        x: currentPosition.x ,
+        y: currentPosition.y ,
+        z: currentPosition.z,
+      };
 
   
 
 
+  // const directionDown = new THREE.Vector3(0, -1, 0);
+  // const directionForward = new THREE.Vector3(0, 0, -1);
+  // directionForward.applyQuaternion(player.current.quaternion).normalize();
+
+  // raycasterDown.set(new THREE.Vector3(newPosition.x, newPosition.y, newPosition.z), directionDown);
+  // raycasterForward.set(new THREE.Vector3(newPosition.x, newPosition.y, newPosition.z), directionForward);
+
+  // const intersectsDown = raycasterDown.intersectObjects(blockPositions.map(position => new THREE.Mesh()));
+  // const intersectsForward = raycasterForward.intersectObjects(blockPositions.map(position => new THREE.Mesh()));
+
+  // const distanceThresholdDown = 1;
+  // const distanceThresholdForward = 5;
+
+  // const isFacingDown = intersectsDown.some(intersection => intersection.distance < distanceThresholdDown);
+  // const isFacingForward = intersectsForward.some(intersection => intersection.distance < distanceThresholdForward);
+
+  // if (isFacingDown) {
+  //   // Handle facing down
+  //   console.log("Facing down!");
+  // }
+
+  // if (isFacingForward) {
+  //   // Handle facing forward
+  //   console.log("Facing forward!");
+  // }
 
 
     if (playerPosition) {
@@ -351,6 +447,53 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
       if (forward) {
         setIsKeyPressed(true);
         setMovementState(MovementState.FORWARD);
+
+        //console.log('PP:',newPosition)
+        const isAtFloorEdge = newPosition.y <= 0;
+        const playerFrontPosition = new THREE.Vector3(newPosition.x, 0, newPosition.z); // Assuming the floor is at y = 0
+        //console.log('PFP:',playerFrontPosition)
+
+        const blockWidthThreshold = 2; // Set a threshold for proximity to the block
+
+        const isFacingBlock = blockPositions.some(blockPosition => {
+          const roundedNewPosition = {
+            x: Math.round(newPosition.x),
+            y: Math.round(newPosition.y),
+            z: Math.round(newPosition.z),
+          };
+        
+          const roundedBlockPosition = {
+            x: Math.round(blockPosition.x),
+            y: Math.round(blockPosition.y),
+            z: Math.round(blockPosition.z),
+          };
+        
+          const distanceToBlock = new THREE.Vector2(roundedNewPosition.x - roundedBlockPosition.x, roundedNewPosition.z - roundedBlockPosition.z).length();
+          
+          // Check if the block is at the exact rounded position as the player
+          return distanceToBlock < blockWidthThreshold && roundedNewPosition.y === roundedBlockPosition.y;
+        });
+        
+        if (isFacingBlock) {
+          // Handle facing a block at the exact rounded position
+          setHitWall('green')
+          console.log("Facing a block at the exact rounded position!");
+
+          //get direction from edge target
+          setGravityDirection(gravityDirectionDict.back)
+        }
+        
+        console.log(gravityDirection)
+      
+      
+        if (isAtFloorEdge) {
+          // Handle approaching floor edge
+          setHitEdge('green')
+          console.log("Approaching floor edge!");
+        }
+      
+
+
       } else {
         setIsKeyPressed(false);
       }
@@ -386,7 +529,7 @@ const [isKeyPressed, setIsKeyPressed] = useState(false);
      const myVector = new THREE.Vector3(bodyPosition.x, bodyPosition.y, bodyPosition.z);
 
 // Now myVector contains your coordinates as a Vector3
-console.log('myVec',myVector);
+//console.log('myVec',myVector);
 
 
       const cameraPosition = myVector.clone().add(new THREE.Vector3(camPosX, camPosY, camPosZ));
@@ -402,17 +545,7 @@ console.log('myVec',myVector);
       state.camera.up.set(0, 1, 0);
 
 
-      // const cameraPosition = playerPosition.clone().add(new THREE.Vector3(camPosX, camPosY, camPosZ));
-      // const cameraTarget = playerPosition.clone().add(new THREE.Vector3(0, 0.25, 0));
-      
-      // // Use the cameraTarget variable in the following lines
-      // smoothedCameraPosition.lerp(cameraPosition, 5 * delta);
-      // smoothedCameraTarget.lerp(cameraTarget, 5 * delta);
-
-      // // Set camera position and look at the player
-      // state.camera.position.copy(smoothedCameraPosition);
-      // state.camera.lookAt(smoothedCameraTarget);
-      // state.camera.up.set(0, 1, 0);
+ 
 
     }
 
@@ -442,11 +575,10 @@ console.log('myVec',myVector);
                         //    enabledRotations={[false, true, true]}
 
       type="dynamic"
-        colliders="ball"
+      colliders="ball"
       ref={body}
       position={[0,2, 0]}
       lockRotations={true}
-
       mass={10}
       restitution={0.2}
       friction={1}
