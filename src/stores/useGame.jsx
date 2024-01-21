@@ -9,13 +9,6 @@ export const movementStateDict = {
   MOVE_RIGHT: "move_right",
 };
 
-export const cameraDirectionsTop = [
-  { x: 0, y: 1, z: 3 }, // Forward
-  { x: 3, y: 1, z: 0 }, // Move Left
-  { x: 0, y: 1, z: -3 }, // Backward
-  { x: -3, y: 1, z: 0 }, // Move Right
-];
-
 const dist = 5;
 
 export const playerMovementTop = [
@@ -56,6 +49,18 @@ export const cameraDirectionsFrontDict = {
   right: { x: 0, y: 1, z: -3 }, // Move Right
 };
 
+export const cameraDirectionsTop = [
+  { x: 0, y: 1, z: 3 }, // Forward
+  { x: 3, y: 1, z: 0 }, // Move Left
+  { x: 0, y: 1, z: -3 }, // Backward
+  { x: -3, y: 1, z: 0 }, // Move Right
+];
+export const cameraDirectionsFront = [
+  { x: 0, y: 3, z: 0 }, // Forward
+  { x: 0, y: 1, z: 3 }, // Move Left
+  { x: 0, y: -3, z: 0 }, // Backward
+  { x: 0, y: 1, z: -3 }, // Move Right
+];
 
 export default create(subscribeWithSelector((set) =>
 {
@@ -73,6 +78,8 @@ export default create(subscribeWithSelector((set) =>
         cameraDirection: [cameraDirectionsTopDict.forward],
         playerMovementTop: playerMovementTop,
         cameraDirectionsTop: cameraDirectionsTopDict,
+        cameraDirectionsFront: cameraDirectionsFrontDict,
+
        
         // Function to set the rotation
         setRotation: (newRotation) => {

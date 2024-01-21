@@ -11,15 +11,13 @@ export default function Level({
   count,
   seed = 0,
   types = [Block],
-  onGravityDirectionChange,
-  onLevelRotationChange,
 }) {
 
 // const timer = useGLTF("./hourglass4.glb");
 // const envMap = './env/scifi_white_sky_scrapers_in_clouds_at_day_time.jpg';
 
   const level = useRef();
-  const gravityDirection = useGame((state) => state.gravityDirection);
+  // const gravityDirection = useGame((state) => state.gravityDirection);
 
   const blocks = useMemo(() => {
     const blocks = [];
@@ -32,9 +30,11 @@ export default function Level({
     return blocks;
   }, [count, types, seed]);
 
-  const setGravityDirection = useGame((state) => state.setGravityDirection);
-  const gameGravityDirection = useGame((state) => state.gravityDirection);
-  const [gd, setGd] = useState(gameGravityDirection);
+     const gravityDirection = useGame((state) => state.gravityDirection);
+
+  // const setGravityDirection = useGame((state) => state.setGravityDirection);
+  // const gameGravityDirection = useGame((state) => state.gravityDirection);
+  // const [gd, setGd] = useState(gameGravityDirection);
 
   const positions = [
     /// Level 1
@@ -74,105 +74,101 @@ export default function Level({
 
   ];
 
-  const [playerPosition, setPlayerPosition] = useState(new THREE.Vector3());
-  const [playerDirection, setPlayerDirection] = useState("forward");
+  // const [playerPosition, setPlayerPosition] = useState(new THREE.Vector3());
+  // const [playerDirection, setPlayerDirection] = useState("forward");
 
-  useEffect(() => {
-    const roundedPosition = new THREE.Vector3(
-      playerPosition.x.toFixed(2),
-      playerPosition.y.toFixed(2),
-      playerPosition.z.toFixed(2)
-    );
-    cgd(playerDirection, playerPosition);
+  // useEffect(() => {
+  //   const roundedPosition = new THREE.Vector3(
+  //     playerPosition.x.toFixed(2),
+  //     playerPosition.y.toFixed(2),
+  //     playerPosition.z.toFixed(2)
+  //   );
+  //   cgd(playerDirection, playerPosition);
 
-   // console.log('rounded position:', roundedPosition)
-  }, [playerPosition]);
+  //  // console.log('rounded position:', roundedPosition)
+  // }, [playerPosition]);
 //gameGravityDirection
 
   // Function to find the matching direction
-  function findMatchingDirection(target) {
-    for (const direction in gravityDirectionDict) {
-      if (
-        JSON.stringify(gravityDirectionDict[direction]) ===
-        JSON.stringify(target)
-      ) {
-        return direction;
-      }
-    }
-    return null; // Return null if no match is found
-  }
+  // function findMatchingDirection(target) {
+  //   for (const direction in gravityDirectionDict) {
+  //     if (
+  //       JSON.stringify(gravityDirectionDict[direction]) ===
+  //       JSON.stringify(target)
+  //     ) {
+  //       return direction;
+  //     }
+  //   }
+  //   return null; // Return null if no match is found
+  // }
 
-  const cgd = (direction, position) => {
+//   const cgd = (direction, position) => {
 
-    const ex = positions[0].slice(0, 1)[0];
-    const ez = positions[0].slice(2, 3)[0];
-    const ey = positions[0].slice(1, 2)[0];
+//     const ex = positions[0].slice(0, 1)[0];
+//     const ez = positions[0].slice(2, 3)[0];
+//     const ey = positions[0].slice(1, 2)[0];
 
-    const px = parseInt(position.x);
-    const pz = parseInt(position.z);
-    const py = parseInt(position.y - 1);
-
-
-    const threshold = 1.2;
+//     const px = parseInt(position.x);
+//     const pz = parseInt(position.z);
+//     const py = parseInt(position.y - 1);
 
 
-    if (JSON.stringify(gameGravityDirection) === JSON.stringify(gravityDirectionDict.top)) {
-
-//      console.log('top', py)
+//     const threshold = 1.2;
 
 
-      if (direction === "forward") {
-        if (py <= -threshold) {
-          setGravityDirection(gravityDirectionDict.front);
-        }
-      }
+//     if (JSON.stringify(gameGravityDirection) === JSON.stringify(gravityDirectionDict.top)) {
 
-      if(direction === "left"){
-        if (py <= -threshold) {
-        setGravityDirection(gravityDirectionDict.left)
-        }
-      }
+// //      console.log('top', py)
 
-      if(direction === "right"){
-        if (py <= -threshold) {
-        setGravityDirection(gravityDirectionDict.right)
-        }
-      }
 
-      if(direction === "back"){
-        if (py <= -threshold) {
-        setGravityDirection(gravityDirectionDict.back)
-        }
-      }
-    }
+//       if (direction === "forward") {
+//         if (py <= -threshold) {
+//           setGravityDirection(gravityDirectionDict.front);
+//         }
+//       }
 
-    ///...
+//       if(direction === "left"){
+//         if (py <= -threshold) {
+//         setGravityDirection(gravityDirectionDict.left)
+//         }
+//       }
 
-    if (JSON.stringify(gameGravityDirection) === JSON.stringify(gravityDirectionDict.front)) {
+//       if(direction === "right"){
+//         if (py <= -threshold) {
+//         setGravityDirection(gravityDirectionDict.right)
+//         }
+//       }
+
+//       if(direction === "back"){
+//         if (py <= -threshold) {
+//         setGravityDirection(gravityDirectionDict.back)
+//         }
+//       }
+//     }
+
+//     ///...
+
+//     if (JSON.stringify(gameGravityDirection) === JSON.stringify(gravityDirectionDict.front)) {
       
-      console.log('front', py)
+//       console.log('front', py)
       
-      if (direction === "forward" || direction === "back") {
+//       if (direction === "forward" || direction === "back") {
 
-        // console.log('front', py,px,pz)
-        // //console.log('trhe', threshold)
+//         // console.log('front', py,px,pz)
+//         // //console.log('trhe', threshold)
 
         
-    //    if (pz >= -3) {
-        //   setGravityDirection(gravityDirectionDict.top);
-        // }
-      }
+//     //    if (pz >= -3) {
+//         //   setGravityDirection(gravityDirectionDict.top);
+//         // }
+//       }
   
-    }
-  
+//     }
 
-
-  
-
-  ///...
+//   ///...
   
  
-};
+// };
 
 
 
@@ -183,11 +179,8 @@ export default function Level({
  
 
       <Player
-  playerPosition={playerPosition}
-  blocks={blocks}
-  positions={positions}
-        onPlayerPositionChange={setPlayerPosition}
-        onPlayerDirectionChange={setPlayerDirection}
+        blocks={blocks}
+        positions={positions}
       />
 
 {/* 
