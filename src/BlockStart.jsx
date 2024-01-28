@@ -1,12 +1,13 @@
 import { RigidBody } from "@react-three/rapier";
 import { playStart } from './Audio';
-
+import { useRef } from "react";
 
 export default function BlockStart({
   position = [0, 0, 0],
   geometry,
   material
 }) {
+
 
   return (
       //  <RigidBody 
@@ -44,8 +45,10 @@ export default function BlockStart({
           >
   
     <mesh 
+      name="floor"
       geometry={geometry}
       material={material}
+
       />
         {/* <group position={position}>
 

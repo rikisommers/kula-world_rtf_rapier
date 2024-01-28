@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import BlockStart from './BlockStart';
 import BlockEnd from './BlockEnd';
 import BlockCube from './BlockCube';
-
+import { useRef } from 'react';
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
 const floor1Material = new THREE.MeshStandardMaterial({ color: 'limegreen' })
 const floor2Material = new THREE.MeshStandardMaterial({ color: 'greenyellow' })
@@ -19,6 +19,7 @@ export default function Block({
   blockType,
 }) {
 
+
   let primitive = null;
   
   if (blockType === 'start') { 
@@ -26,17 +27,20 @@ export default function Block({
     position={position}
     geometry={boxGeometry}
     material={floor2Material}
+
     />
   } else if (blockType === 'end') {
     primitive = <BlockEnd
     position={position}
     geometry={boxGeometry}
     material={wallMaterial}
+
     />
   } else if (blockType === 'cube') {
     primitive = <BlockCube 
     position={position}
     geometry={boxGeometry}
+
     />
 
   }

@@ -6,7 +6,7 @@ import useGame from "./stores/useGame.jsx";
 import { gravityDirectionDict } from "./stores/useGame.jsx";
 import { RigidBody } from "@react-three/rapier";
 import { Physics } from "@react-three/rapier";
-
+import SceneInspector from "./sceneInspector.jsx";
 export default function Level({
   count,
   seed = 0,
@@ -15,8 +15,25 @@ export default function Level({
 
 // const timer = useGLTF("./hourglass4.glb");
 // const envMap = './env/scifi_white_sky_scrapers_in_clouds_at_day_time.jpg';
+const collidableObjects = useRef([]);
 
-  const level = useRef();
+
+
+
+const level = useRef();
+const meshObjectsRef = useRef([]);
+
+
+
+
+
+
+
+
+
+
+
+
   // const gravityDirection = useGame((state) => state.gravityDirection);
 
   const blocks = useMemo(() => {
@@ -177,8 +194,10 @@ export default function Level({
   return (
     <Physics debug={true} gravity={gravityDirection} shadows>
  
+      <SceneInspector levelRef={level} />
 
       <Player
+        objects={meshObjectsRef.current}
         blocks={blocks}
         positions={positions}
       />

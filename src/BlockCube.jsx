@@ -5,7 +5,7 @@ export default function BlockCube({
 
   return (
 
-        <mesh position={position}>
+        <mesh position={position} name="floor">
             <boxGeometry />
             <meshStandardMaterial color="mediumpurple" />
         </mesh>

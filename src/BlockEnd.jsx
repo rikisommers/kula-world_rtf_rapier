@@ -40,6 +40,7 @@ export default function BlockEnd({
     <group position={position}>
 
     <mesh 
+      name="floor"
       geometry={geometry}
       material={material}
       />

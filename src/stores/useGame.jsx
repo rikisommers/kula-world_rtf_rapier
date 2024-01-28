@@ -27,11 +27,11 @@ export const playerMovementTopDict = {
 
 export const gravityDirectionDict = {
   top: [0, -10, 0], // Top face
-  bottom: [0, 10, 0], // Bottom face
-  right: [-10, 0, 0], // Right face
-  left: [10, 0, 0], // Left face
-  front: [0, 0, 10], // Front face
-  back: [0, 0, -10], // Back face
+  bottom: [0, 100, 0], // Bottom face
+  right: [-100, 0, 0], // Right face
+  left: [100, 0, 0], // Left face
+  front: [0, 0, 100], // Front face
+  back: [0, 0, -100], // Back face
 }
 
 
@@ -68,6 +68,7 @@ export default create(subscribeWithSelector((set) =>
 
 
     return {
+        objectPositions: [],
         blocksCount: 10,
         blocksSeed: 0,
         phase: 'ready',
@@ -81,6 +82,10 @@ export default create(subscribeWithSelector((set) =>
         cameraDirectionsFront: cameraDirectionsFrontDict,
 
        
+        setObjectPositions: (newPos) => {
+          set({ objectPositions: newPos });
+        },
+
         // Function to set the rotation
         setRotation: (newRotation) => {
           set({ rotation: newRotation });
