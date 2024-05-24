@@ -7,6 +7,7 @@ import { gravityDirectionDict } from "./stores/useGame.jsx";
 import { RigidBody } from "@react-three/rapier";
 import { Physics } from "@react-three/rapier";
 import SceneInspector from "./sceneInspector.jsx";
+
 export default function Level({
   count,
   seed = 0,
@@ -54,42 +55,93 @@ const meshObjectsRef = useRef([]);
   // const [gd, setGd] = useState(gameGravityDirection);
 
   const positions = [
-    /// Level 1
-    // x y z
+    /// Top face (y = -1)
     [0, -1, 0, "start"], 
     [0, -1, -1, "cube"],
     [0, -1, -2, "cube"],
     [0, -1, -3, "cube"],  
-
     [1, -1, 0, "cube"],
     [1, -1, -1, "cube"],
     [1, -1, -2, "cube"],
     [1, -1, -3, "cube"],
-    
     [2, -1, 0, "cube"],
     [2, -1, -1, "cube"],
     [2, -1, -2, "cube"],
     [2, -1, -3, "cube"],
-
     [-1, -1, 0, "cube"],
     [-1, -1, -1, "cube"],
     [-1, -1, -2, "cube"],
     [-1, -1, -3, "cube"], 
-
     [-2, -1, 0, "end"],
     [-2, -1, -1, "cube"],
     [-2, -1, -2, "cube"],
-    [-2, -1, -3, "cube"], 
+    [-2, -1, -3, "cube"],
+
+    /// Bottom face (y = -3)
+    [0, -3, 0, "cube"], 
+    [0, -3, -1, "cube"],
+    [0, -3, -2, "cube"],
+    [0, -3, -3, "cube"],  
+    [1, -3, 0, "cube"],
+    [1, -3, -1, "cube"],
+    [1, -3, -2, "cube"],
+    [1, -3, -3, "cube"],
+    [2, -3, 0, "cube"],
+    [2, -3, -1, "cube"],
+    [2, -3, -2, "cube"],
+    [2, -3, -3, "cube"],
+    [-1, -3, 0, "cube"],
+    [-1, -3, -1, "cube"],
+    [-1, -3, -2, "cube"],
+    [-1, -3, -3, "cube"], 
+    [-2, -3, 0, "cube"],
+    [-2, -3, -1, "cube"],
+    [-2, -3, -2, "cube"],
+    [-2, -3, -3, "cube"],
+
+    /// Front face (z = 0)
+    [0, -2, 0, "cube"], 
+    [1, -2, 0, "cube"],
+    [2, -2, 0, "cube"],
+    [-1, -2, 0, "cube"],
+    [-2, -2, 0, "cube"],
+    [0, -3, 0, "cube"], 
+    [1, -3, 0, "cube"],
+    [2, -3, 0, "cube"],
+    [-1, -3, 0, "cube"],
+    [-2, -3, 0, "cube"],
+
+    /// Back face (z = -3)
+    [0, -2, -3, "cube"], 
+    [1, -2, -3, "cube"],
+    [2, -2, -3, "cube"],
+    [-1, -2, -3, "cube"],
+    [-2, -2, -3, "cube"],
+    [0, -3, -3, "cube"], 
+    [1, -3, -3, "cube"],
+    [2, -3, -3, "cube"],
+    [-1, -3, -3, "cube"],
+    [-2, -3, -3, "cube"],
+
+    /// Left face (x = -2)
+    [-2, -2, 0, "cube"], 
+    [-2, -2, -1, "cube"],
+    [-2, -2, -2, "cube"],
+    [-2, -3, 0, "cube"], 
+    [-2, -3, -1, "cube"],
+    [-2, -3, -2, "cube"],
+
+    /// Right face (x = 2)
+    [2, -2, 0, "cube"], 
+    [2, -2, -1, "cube"],
+    [2, -2, -2, "cube"],
+    [2, -3, 0, "cube"], 
+    [2, -3, -1, "cube"],
+    [2, -3, -2, "cube"],
+];
 
 
-    [0, 2, -4, "cube"],
-     [0, 1, -4, "cube"],
-     [0, 0, -4, "cube"],
-    [1, 2, -4, "cube"],
-     [1, 1, -4, "cube"],
-     [1, 0, -4, "cube"],
-
-  ];
+  
 
   // const [playerPosition, setPlayerPosition] = useState(new THREE.Vector3());
   // const [playerDirection, setPlayerDirection] = useState("forward");
@@ -190,7 +242,7 @@ const meshObjectsRef = useRef([]);
 
 
 
-
+//gravityDirection
   return (
     <Physics debug={true} gravity={gravityDirection} shadows>
  

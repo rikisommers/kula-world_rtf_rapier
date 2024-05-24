@@ -323,6 +323,7 @@ export default function Player({ blocks, positions, objects}) {
   const setPlayerMove = useCallback(() => {
 
     console.log('moving',hasHitWall);
+    setIsPlayerMoving(true);
 
     // if (hasHitWall) {
     //   setHasHitWall(false)
@@ -345,7 +346,9 @@ export default function Player({ blocks, positions, objects}) {
       
       setBodyPosition(newPosition)
       body.current.setTranslation(newPosition);
+      
       checkCollisionsBelow();
+      setIsPlayerMoving(false);
 
 
   }, []);
@@ -358,14 +361,14 @@ export default function Player({ blocks, positions, objects}) {
     setMovementState(MovementState.MOVE_RIGHT);
     setCameraStateIndex((prevIndex) => (prevIndex + 1 + 4) % 4);
     //player.current.rotation.y += Math.PI / 2; // Rotate by 90 degrees
-    isPlayerMoving = true;
+    setIsPlayerMoving(true);
 
     gsap.to(player.current.rotation, {
       duration: 0.3, // Adjust the duration for the desired speed
       y: "+=" + Math.PI / 2,
       ease: "linear", // Use linear easing for uniform speed
       onComplete: () => {
-        isPlayerMoving = false;
+        setIsPlayerMoving(false);
       },
     });
   };
@@ -375,14 +378,14 @@ export default function Player({ blocks, positions, objects}) {
   const turnPlayerRight = () => {
     setMovementState(MovementState.MOVE_RIGHT);
     setCameraStateIndex((prevIndex) => (prevIndex - 1 + 4) % 4);
-    isPlayerMoving = true;
+    setIsPlayerMoving(true);
 
     gsap.to(player.current.rotation, {
       duration: 0.3, // Adjust the duration for the desired speed
       y: "-=" + Math.PI / 2,
       ease: "linear", // Use linear easing for uniform speed
       onComplete: () => {
-        isPlayerMoving = false;
+        setIsPlayerMoving(false);
       },
     });
   };
@@ -446,8 +449,10 @@ export default function Player({ blocks, positions, objects}) {
 
   const handleContinuousMovement = useCallback(() => {
     if (isKeyPressed && movementState === MovementState.FORWARD) {
+      console.log('hcm')
       setPlayerMove();
     }
+    
   }, [isKeyPressed, movementState]);
 
   function getReverseGravityDirectionOnHit(roundedVector) {
@@ -525,7 +530,7 @@ export default function Player({ blocks, positions, objects}) {
       (value) => {
         if (value) {
           setMovementState(MovementState.FORWARD);
-         // console.log("direction:", livePlayerDirection);
+         console.log("direction:", livePlayerDirection);
 
         }
       }
@@ -620,7 +625,7 @@ export default function Player({ blocks, positions, objects}) {
       
       // ---separate this---- Set the local gravity direction based on the rotated gravity
       setGravityDirection(rotatedGravity);
-      console.log(gravityDirection,rotatedGravity)
+     // console.log(gravityDirection,rotatedGravity)
       // Rotate the player mesh by 90 degrees
 
       // Set hasHitWall to true to prevent triggering again until the player starts moving forward
@@ -674,8 +679,8 @@ const checkCollisionsBelow = () => {
 
     intersects.forEach((intersection, index) => {
  
-      console.log('Object:', intersection.object.uuid); // Log details about the intersected object
-      console.log(newPosition)
+      //console.log('Object:', intersection.object.uuid); // Log details about the intersected object
+      //console.log(newPosition)
       
       const object = intersection.object;
       const originalMaterial = object.material;
@@ -722,7 +727,7 @@ const checkCollisionsBelow = () => {
     });
   } else {
 
-    console.log('----------No collision infront.',raycasterForward.ray.direction);
+    //console.log('----------No collision infront.',raycasterForward.ray.direction);
 
     // gsap.to(player.current.rotation, {
     //   duration: 0.3,
@@ -777,14 +782,15 @@ const checkCollisionsBelow = () => {
 
     if (playerPosition) {
 
-
+     
       if (forward) {
         setMovementState(MovementState.FORWARD);
+              //handleContinuousMovement();
+              setPlayerMove();
         checkCollisionsBelow();
       } else {
       }
 
-      handleContinuousMovement();
 
       const myVector = new THREE.Vector3(
         bodyPosition.x,
@@ -795,7 +801,7 @@ const checkCollisionsBelow = () => {
       const cameraPosition = myVector
         .clone()
         .add(new THREE.Vector3(camPosX, camPosY, camPosZ));
-      const cameraTarget = myVector.clone().add(new THREE.Vector3(0, 0.25, 0));
+      const cameraTarget = myVector.clone().add(new THREE.Vector3(0, 0.5, 0));
 
       // Use the cameraTarget variable in the following lines
       smoothedCameraPosition.lerp(cameraPosition, 5 * delta);
@@ -815,15 +821,15 @@ const checkCollisionsBelow = () => {
     <RigidBody
       //    enabledRotations={[false, true, true]}
 
-      type="kinematic"
-      colliders="cuboid"
+      type="static"
+      colliders="ball"
       ref={body}
-      position={[0, 1.1, 0]}
-      lockTranslations={[true,false,false]}
+      position={[0, 0.1, 0]}
+      lockTranslations={[false,false,false]}
       lockRotations={[true,false,false]}
-      mass={0}
-      restitution={0}
-      friction={0}
+      mass={0.5}
+      restitution={0.4}
+      friction={0.5}
         enabledRotation={[false,false,false]}
     >
       <mesh ref={player}>
