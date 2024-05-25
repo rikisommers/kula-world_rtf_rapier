@@ -26,7 +26,7 @@ export const playerMovementTopDict = {
 };
 
 export const gravityDirectionDict = {
-  top: [0, -100, 0], // Top face
+  top: [0, -0, 0], // Top face
   bottom: [0, 100, 0], // Bottom face
   right: [-100, 0, 0], // Right face
   left: [100, 0, 0], // Left face

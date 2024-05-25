@@ -34,13 +34,13 @@ root.render(
 
     <Canvas
       shadows="false"
-      camera={{
-        fov: 70,
-        near: 1,
-        far: 10,
-        position: [1, 1, 1],
+      // camera={{
+      //   fov: 70,
+      //   near: 1,
+      //   far: 10,
+      //   position: [1, 1, 1],
         
-      }}
+      // }}
     >
     
       <Experience />
