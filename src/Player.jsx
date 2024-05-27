@@ -1,17 +1,12 @@
 import * as THREE from "three";
-import {
-  useRapier,
-  RigidBody,
-} from "@react-three/rapier"; // Correct import for Quat and Euler
+import { useRapier, RigidBody } from "@react-three/rapier"; // Correct import for Quat and Euler
 import { useFrame } from "@react-three/fiber";
-import {
-  useKeyboardControls,
-} from "@react-three/drei";
+import { useKeyboardControls } from "@react-three/drei";
 import { useEffect, useCallback, useRef, useState } from "react";
 import useGame from "./stores/useGame.jsx";
 import { gsap } from "gsap";
-import { useThree } from '@react-three/fiber'
-import { PerspectiveCamera } from "three";
+import { useThree } from "@react-three/fiber";
+import { PerspectiveCamera,  Euler, Quaternion,  Spherical, Vector3} from "three";
 
 import { useControls } from "leva";
 
@@ -22,17 +17,15 @@ const directionMap = {
   3: "right",
 };
 
-export default function Player({ blocks, positions, objects}) {
+export default function Player({ blocks, positions, objects }) {
   const [blockPositions, setBlockPositions] = useState(0);
   const gravityDirection = useGame((state) => state.gravityDirection);
   const setGravityDirection = useGame((state) => state.setGravityDirection);
   const setCameraDirection = useGame((state) => state.setCameraDirection);
   const objp = useGame((state) => state.objectPositions);
 
-
- // console.log('___________-__-_-_',objp)
+  // console.log('___________-__-_-_',objp)
   //console.log(blocks, positions, objects)
-
 
   const MovementState = {
     IDLE: "idle",
@@ -45,7 +38,9 @@ export default function Player({ blocks, positions, objects}) {
   const [movementState, setMovementState] = useState(MovementState.IDLE);
   const [camPosition, setCamPosition] = useState(new THREE.Vector3(10, 10, 10));
   const [bodyPosition, setBodyPosition] = useState(new THREE.Vector3(0, 0, 0));
-  const [playerPosition, setPlayerPosition] = useState(new THREE.Vector3(0, 0, 0));
+  const [playerPosition, setPlayerPosition] = useState(
+    new THREE.Vector3(0, 0, 0)
+  );
 
   const [cameraStateIndex, setCameraStateIndex] = useState(0);
   const [livePlayerDirection, setLivePlayerDirection] = useState(
@@ -54,21 +49,10 @@ export default function Player({ blocks, positions, objects}) {
   var lpd = new THREE.Vector3(0, 0, -1);
 
   //set cam back
-  const [smoothedCameraPosition] = useState(() => camPosition);
-  const [smoothedCameraTarget] = useState(() => new THREE.Vector3());
-  const [smoothedPlayerPosition] = useState(() => new THREE.Vector3());
-  const [playerDirection] = useState(() => new THREE.Vector3());
+
   const [hasHitWall, setHasHitWall] = useState(false);
   const [hasHitEdge, setHasHitEdge] = useState(false);
   const [isPlayerMoving, setIsPlayerMoving] = useState(false);
-
-
-
-  const raycasterForward = new THREE.Raycaster();
-
-  const raycasterDown = new THREE.Raycaster();
-  raycasterDown.far = 1; // Set the far property to an appropriate value
-  raycasterForward.far = 2; // Set the far property to an appropriate value
 
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
@@ -81,20 +65,9 @@ export default function Player({ blocks, positions, objects}) {
   const body = useRef();
   const player = useRef();
   const cameraRef = useRef();
-
-  const transformControls = useRef();
-
-
-  const dist = 5;
+  const group = useRef();
 
 
-
-  const playerMovementBottom = [
-    { x: 0, y: -dist, z: 0 }, // Move Down
-    { x: 0, y: 0, z: -dist }, // Forward
-    { x: 0, y: dist, z: 0 }, // Move Up
-    { x: 0, y: 0, z: dist }, // Backward
-  ];
 
 
 
@@ -102,39 +75,6 @@ export default function Player({ blocks, positions, objects}) {
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
-
-
-
-  const updateLocalGravity = useCallback(() => {
-
-    const gravityUp = new THREE.Vector3(...gravityDirection);
-    
-    // Rotate the gravity direction according to the player's rotation
-    const rotatedGravity = gravityUp.applyQuaternion(player.current?.quaternion);
-
-    // Set the local gravity direction based on the rotated gravity
-    setGravityDirection(rotatedGravity);
-    console.log('Applied gravity',rotatedGravity)
-    console.log('World gravity',world.gravity)
-
-
-  }, []);
-
-
-  useEffect(() => {
-    console.log('update local gravity',gravityDirection)
-    // Update local gravity direction when player rotation changes
-    updateLocalGravity();
-  }, [player.position,player.rotation]);
-
-
-
-
-    //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
-
 
   function arraysMatch(arr1, arr2) {
     if (arr1.length !== arr2.length) {
@@ -192,14 +132,6 @@ export default function Player({ blocks, positions, objects}) {
     }
   }, [movementState]);
 
-  useEffect(() => {
-  //  console.log("Updated livePlayerDirection:", bodyPosition);
-    // other code
-    
-
-  }, [bodyPosition]);
-
-
 
 
   useEffect(() => {
@@ -216,67 +148,40 @@ export default function Player({ blocks, positions, objects}) {
   }, [positions]);
 
 
-
-  useEffect(() => {
-    const playerRotation = player.current?.rotation;
-
-    const eulerRotation = new THREE.Euler(
-      0,
-      Math.round(player.current.rotation.y),
-      0
-    );
-    const quaternionRotation = new THREE.Quaternion().setFromEuler(
-      eulerRotation
-    );
-
-    // console.log('Player Rotation:', playerRotation);
-    // console.log('Player Rotation U:', eulerRotation);
-    // console.log('Forward Direction:', quaternionRotation);
-  }, [camPosition]);
-
-
-
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
-
-
 
   const setPlayerMove = useCallback(() => {
-
-    console.log('moving',hasHitWall);
+    console.log("moving", hasHitWall);
     setIsPlayerMoving(true);
+    isExecuted = true;
 
     // if (hasHitWall) {
     //   setHasHitWall(false)
     // }
-      //console.log("LPD player move", lpd);
-      const moveDirection = new THREE.Vector3(0, 0, -1);
-      moveDirection.applyQuaternion(player.current.quaternion).normalize();
+    //console.log("LPD player move", lpd);
+    const moveDirection = new THREE.Vector3(0, 0, -1);
+    moveDirection.applyQuaternion(player.current.quaternion).normalize();
 
-      const moveDistance = 1; // Adjust the distance of movement as needed
-      const moveSpeed = 0.1; // Adjust the speed of movement as needed
+    const moveDistance = 1; // Adjust the distance of movement as needed
+    const moveSpeed = 0.1; // Adjust the speed of movement as needed
 
-     // const currentPosition = body.current.translation();
-      const currentPosition = player.current.position;
-      
-      
-      const newPosition = {
-        x: currentPosition.x + moveDirection.x * moveSpeed * moveDistance,
-        y: currentPosition.y + moveDirection.y * moveSpeed * moveDistance,
-        z: currentPosition.z + moveDirection.z * moveSpeed * moveDistance,
-      };
-      
-   
-      
-      //body.current.setTranslation(newPosition);
-      player.current.position.copy(newPosition);
+    // const currentPosition = body.current.translation();
+    const currentPosition = player.current.position;
 
-      checkCollisionsBelow();
-      setIsPlayerMoving(false);
+    const newPosition = {
+      x: currentPosition.x + moveDirection.x * moveSpeed * moveDistance,
+      y: currentPosition.y + moveDirection.y * moveSpeed * moveDistance,
+      z: currentPosition.z + moveDirection.z * moveSpeed * moveDistance,
+    };
 
+    //body.current.setTranslation(newPosition);
+    player.current.position.copy(newPosition);
 
+    //checkCollisions();
+    setIsPlayerMoving(false);
   }, []);
 
 
@@ -284,9 +189,11 @@ export default function Player({ blocks, positions, objects}) {
   const turnPlayerLeft = () => {
     if (!isPlayerMoving) {
       setIsPlayerMoving(true);
-      const currentRotation = player.current.rotation.y;
-      const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + (Math.PI / 2);
-      gsap.to(player.current.rotation, {
+      const currentRotation = group.current.rotation.y;
+      const targetRotation =
+        Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) +
+        Math.PI / 2;
+      gsap.to(group.current.rotation, {
         duration: 0.3, // Adjust the duration for the desired speed
         y: targetRotation,
         ease: "linear", // Use linear easing for uniform speed
@@ -297,13 +204,15 @@ export default function Player({ blocks, positions, objects}) {
       });
     }
   };
-  
+
   const turnPlayerRight = () => {
     if (!isPlayerMoving) {
       setIsPlayerMoving(true);
-      const currentRotation = player.current.rotation.y;
-      const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - (Math.PI / 2);
-      gsap.to(player.current.rotation, {
+      const currentRotation = group.current.rotation.y;
+      const targetRotation =
+        Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) -
+        Math.PI / 2;
+      gsap.to(group.current.rotation, {
         duration: 0.3, // Adjust the duration for the desired speed
         y: targetRotation,
         ease: "linear", // Use linear easing for uniform speed
@@ -314,55 +223,73 @@ export default function Player({ blocks, positions, objects}) {
       });
     }
   };
-  
+
   const turnPlayerUp = () => {
-    if (!isPlayerMoving) {
-      setIsPlayerMoving(true);
-      const currentRotation = player.current.rotation.x;
-      const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + (Math.PI / 2);
-      gsap.to(player.current.rotation, {
-        duration: 1.0, // Adjust the duration for the desired speed
-        x: targetRotation,
-        ease: "linear", // Use linear easing for uniform speed
-        onComplete: () => {
-          setIsPlayerMoving(false);
-          updatePlayerUpDirection();
-        },
-      });
+    if (!isExecuted) {
+        // Get the current Euler rotation of the group
+        const currentRotation = group.current.rotation.clone();
+
+        // Calculate the new x rotation taking into account the current y rotation
+        const targetRotationX = Math.round(currentRotation.x / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
+        
+        // Calculate the new y rotation (no change in this case)
+        const targetRotationY = currentRotation.y;
+
+        // Apply the new rotation
+        gsap.to(group.current.rotation, {
+            duration: 0.3,
+            x: targetRotationX,
+            y: targetRotationY, // Maintain the current y rotation
+            ease: "linear",
+            onComplete: () => {
+                updatePlayerUpDirection();
+            },
+        });
     }
-  };
-  
+};
+
   const turnPlayerDown = () => {
-    if (!isPlayerMoving) {
-      setIsPlayerMoving(true);
-      const currentRotation = player.current.rotation.x;
-      const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - (Math.PI / 2);
-      gsap.to(player.current.rotation, {
-        duration: 1.0, // Adjust the duration for the desired speed
-        x: targetRotation,
-        ease: "linear", // Use linear easing for uniform speed
-        onComplete: () => {
-          setIsPlayerMoving(false);
-          updatePlayerUpDirection();
-        },
+    // if (!isPlayerMoving) {
+    //   setIsPlayerMoving(true);
+    // }          setIsPlayerMoving(false);
+
+    if (!isExecuted) {
+
+          const currentRotation = group.current.rotation.x;
+          const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
+
+          gsap.to(group.current.rotation, {
+          duration: 0.3, // Adjust the duration for the desired speed
+          x: targetRotation,
+          ease: "linear", // Use linear easing for uniform speed
+          onComplete: () => {
+            //setIsPlayerMoving(false);
+           // cameraRef.current.rotation.copy(player.current.rotation);
+            updatePlayerUpDirection();
+          //  isExecuted = true;
+          },
+
       });
     }
+  
   };
 
   const updatePlayerUpDirection = () => {
     // Calculate the up direction based on the player's current rotation
-    const upDirection = new THREE.Vector3(0, 1, 0).applyQuaternion(player.current.quaternion);
-  
+    const upDirection = new THREE.Vector3(0, 1, 0).applyQuaternion(
+      player.current.quaternion
+    );
+
     // Set the player's up direction to match the calculated up direction
     player.current.up.copy(upDirection);
   };
 
-
   const jump = useCallback(() => {
-
     const playerRotation = player.current.rotation.clone();
     const impulseDirection = new THREE.Vector3(0, 1, 0);
-    impulseDirection.applyQuaternion(new THREE.Quaternion().setFromEuler(playerRotation));
+    impulseDirection.applyQuaternion(
+      new THREE.Quaternion().setFromEuler(playerRotation)
+    );
 
     const impulseStrength = 20; // Adjust the strength of the impulse as needed
     body.current.applyImpulse({
@@ -370,25 +297,17 @@ export default function Player({ blocks, positions, objects}) {
       y: impulseDirection.y * impulseStrength,
       z: impulseDirection.z * impulseStrength,
     });
- 
   }, []);
 
   const reset = () => {
     console.log("reset");
   };
 
-
-
-
-
-
-
   const handleContinuousMovement = useCallback(() => {
     if (isKeyPressed && movementState === MovementState.FORWARD) {
-      console.log('hcm')
+      console.log("hcm");
       setPlayerMove();
     }
-    
   }, [isKeyPressed, movementState]);
 
   function getReverseGravityDirectionOnHit(roundedVector) {
@@ -399,10 +318,6 @@ export default function Player({ blocks, positions, objects}) {
     };
     return newGravityDirection;
   }
-
-
-
-
 
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
@@ -419,26 +334,19 @@ export default function Player({ blocks, positions, objects}) {
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
 
+  // useEffect(() => {
 
+  //   // Reset the hasHitWall state when the player starts moving forward again
+  //   if (movementState === MovementState.FORWARD) {
+  //     setHasHitWall(false);
+  //     console.log('movement state',hasHitWall)
+  //   }
+  // }, [movementState]);
 
-
-// useEffect(() => {
-
-
-//   // Reset the hasHitWall state when the player starts moving forward again
-//   if (movementState === MovementState.FORWARD) {
-//     setHasHitWall(false);
-//     console.log('movement state',hasHitWall)
-//   }
-// }, [movementState]);
-
-// useEffect(() => {
-//   // Reset the hasHitWall state when the player starts moving forward again
-//  console.log('hasHiwall', hasHitWall)
-// }, [hasHitWall]);
-
-
-
+  // useEffect(() => {
+  //   // Reset the hasHitWall state when the player starts moving forward again
+  //  console.log('hasHiwall', hasHitWall)
+  // }, [hasHitWall]);
 
   useEffect(() => {
     const unsubscribeReset = useGame.subscribe(
@@ -467,11 +375,10 @@ export default function Player({ blocks, positions, objects}) {
       (state) => state.forward,
       (value) => {
         if (value) {
-//          turnPlayerUp();
-         // setPlayerMove()
+                    turnPlayerUp();
+          // setPlayerMove()
           setMovementState(MovementState.FORWARD);
-         console.log("direction:", livePlayerDirection);
-
+          console.log("direction:", livePlayerDirection);
         }
       }
     );
@@ -516,10 +423,7 @@ export default function Player({ blocks, positions, objects}) {
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
 
-  //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------------------------------
+
 
 
   const handleEdgeCollision = () => {
@@ -527,221 +431,249 @@ export default function Player({ blocks, positions, objects}) {
       duration: 0.3,
       x: "-=" + Math.PI / 2,
       ease: "linear",
-    })
-
-    const gravityUp = new THREE.Vector3(...gravityDirection);
-    const angle = Math.PI / 2; // 90 degrees in radians
-    gravityUp.applyAxisAngle(new THREE.Vector3(1, 0, 0), angle);
-    // Rotate the gravity direction according to the player's rotation
-    const rotatedGravity = gravityUp.clone().applyQuaternion(player.current?.quaternion);
-
+    });
 
     
+    // const gravityUp = new THREE.Vector3(...gravityDirection);
+    // const angle = Math.PI / 2; // 90 degrees in radians
+    //gravityUp.applyAxisAngle(new THREE.Vector3(1, 0, 0), angle);
+
+    // Rotate the gravity direction according to the player's rotation
+    // const rotatedGravity = gravityUp
+    //   .clone()
+    //   .applyQuaternion(player.current?.quaternion);
+
+    console.log('EDGE-==================');
+
     // Set the local gravity direction based on the rotated gravity
-    setGravityDirection(rotatedGravity);
-    console.log(gravityDirection,rotatedGravity)
+    //setGravityDirection(rotatedGravity);
+    //console.log(gravityDirection,rotatedGravity)
     // Rotate the player mesh by 90 degrees
-
-  }
-
+  };
 
   const handleWallCollision = () => {
     if (!hasHitWall) {
-
-
       //--use gravity vec  with euler
       gsap.to(player.current.rotation, {
         duration: 0.3,
         x: "+=" + Math.PI / 2,
         ease: "linear",
-      })
-
+      });
 
       const gravityUp = new THREE.Vector3(...gravityDirection);
       const angle = Math.PI / 2; // 90 degrees in radians
       gravityUp.applyAxisAngle(new THREE.Vector3(1, 0, 0), angle);
       // Rotate the gravity direction according to the player's rotation
-      const rotatedGravity = gravityUp.clone().applyQuaternion(player.current?.quaternion);
-      
+      const rotatedGravity = gravityUp
+        .clone()
+        .applyQuaternion(player.current?.quaternion);
+
       // ---separate this---- Set the local gravity direction based on the rotated gravity
       setGravityDirection(rotatedGravity);
-     // console.log(gravityDirection,rotatedGravity)
+      // console.log(gravityDirection,rotatedGravity)
       // Rotate the player mesh by 90 degrees
 
       // Set hasHitWall to true to prevent triggering again until the player starts moving forward
       setHasHitWall(true);
     }
   };
+
+  // Call this function wherever you want to check for collisions below the player
+
+  // const raycasterForward = new THREE.Raycaster();
+  // const raycasterDown = new THREE.Raycaster();
+
+
+
+  const [raycasterForward, setRaycasterForward] = useState(new THREE.Vector3(0, 0, -1));
+  const [raycasterDown, setRaycasterDown] = useState(new THREE.Vector3(0, -1, 0));
   
+  raycasterDown.far = 10; // Set the far property to an appropriate value
+  raycasterForward.far = 10; // Set the far property to an appropriate value
 
 
-// Call this function wherever you want to check for collisions below the player
 
+  const checkCollisions = (player) => {
 
+    const currentPosition = player.current?.position;
+    const currentRotation = player.current?.rotation;
 
-const { scene } = useThree();
+    const newPosition = new THREE.Vector3(
+      currentPosition.x,
+      currentPosition.y,
+      currentPosition.z
+    );
 
-  
-const checkCollisionsBelow = () => {
-
-  const currentPosition = body.current?.translation();
-  const newPosition = new THREE.Vector3(currentPosition.x, currentPosition.y, currentPosition.z);
-
-  // Check if playerPosition is defined
-  if (!currentPosition) {
-    console.error('Player position is not defined.');
-    return;
-  }
+    // Check if playerPosition is defined
+    if (!currentPosition) {
+      console.error("Player position is not defined.");
+      return;
+    }
 
     const raycasterOffset = new THREE.Vector3(0, 0, 0);
-    raycasterDown.set(newPosition.clone().add(raycasterOffset), gravityDirection);
 
+    raycasterDown.set(
+      newPosition.clone().add(raycasterOffset),
+      currentRotation
+    );
 
-     
     // Set the raycaster direction in the local coordinate system (forward direction along positive z-axis)
-    const rayFDirection = new THREE.Vector3(0, 0, -1);
-    rayFDirection.applyAxisAngle(new THREE.Vector3(1, 0, 0), player.current.rotation.x);
-    rayFDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), player.current.rotation.y);
-    rayFDirection.applyAxisAngle(new THREE.Vector3(0, 0, 1), player.current.rotation.z);
+    const rayFDirection = new THREE.Vector3();
 
-    raycasterForward.set(newPosition.clone().add(raycasterOffset), rayFDirection);
+    rayFDirection.applyAxisAngle(
+      new THREE.Vector3(1, 0, 0),
+      player.current.rotation.x
+    );
+    rayFDirection.applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      player.current.rotation.y
+    );
+    rayFDirection.applyAxisAngle(
+      new THREE.Vector3(0, 0, 1),
+      player.current.rotation.z
+    );
 
+    raycasterForward.set(
+      newPosition.clone().add(raycasterOffset),
+      rayFDirection
+    );
 
 
   
-   const intersects = raycasterDown.intersectObjects(objp, true);
-   const intersectsForward = raycasterForward.intersectObjects(objp, true);
 
 
 
-  if (intersects.length > 0) {
-    console.log('Collision below!', raycasterDown.ray.direction);
+    const intersects = raycasterDown.intersectObjects(objp, true);
+    const intersectsForward = raycasterForward.intersectObjects(objp, true);
 
-    intersects.forEach((intersection, index) => {
- 
-      //console.log('Object:', intersection.object.uuid); // Log details about the intersected object
-      //console.log(newPosition)
-      
-      const object = intersection.object;
-      const originalMaterial = object.material;
+    if (intersects.length > 0) {
+      console.log("Collision below!", raycasterDown.ray.direction);
 
-      // Change the material to a highlighted material
-      const highlightedMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      object.material = highlightedMaterial;
+      intersects.forEach((intersection, index) => {
+        //console.log('Object:', intersection.object.uuid); // Log details about the intersected object
+        //console.log(newPosition)
 
-      // Optionally, set a timeout to revert the material back after a certain time
-   
-    });
+        const object = intersection.object;
+        const originalMaterial = object.material;
 
+        // Change the material to a highlighted material
+        const highlightedMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff0000,
+        });
+        object.material = highlightedMaterial;
 
+        // Optionally, set a timeout to revert the material back after a certain time
+      });
+    } else {
+      console.log("----------No collision below.", raycasterDown.ray.direction);
+      //  handleEdgeCollision();
+      //   gsap.to(player.current.rotation, {
+      //     duration: 0.3,
+      //     x: "-=" + Math.PI / 2,
+      //     ease: "linear",
+      //   })
+    }
 
-  } else {
+    if (intersectsForward.length > 0) {
+      console.log("Collision front!", raycasterForward.ray.direction);
 
-    console.log('----------No collision below.',raycasterDown.ray.direction);
-  //  handleEdgeCollision();
-  //   gsap.to(player.current.rotation, {
-  //     duration: 0.3,
-  //     x: "-=" + Math.PI / 2,
-  //     ease: "linear",
-  //   })
-  }
+      intersects.forEach((intersection, index) => {
+        console.log("Object:", intersection.object.uuid); // Log details about the intersected object
+        console.log(newPosition);
 
-  if (intersectsForward.length > 0) {
-    console.log('Collision front!', raycasterForward.ray.direction);
+        const object = intersection.object;
+        const originalMaterial = object.material;
 
-    intersects.forEach((intersection, index) => {
- 
-      console.log('Object:', intersection.object.uuid); // Log details about the intersected object
-      console.log(newPosition)
-      
-      const object = intersection.object;
-      const originalMaterial = object.material;
+        // Change the material to a highlighted material
+        const highlightedMaterial = new THREE.MeshBasicMaterial({
+          color: "pink",
+        });
+        object.material = highlightedMaterial;
 
-      // Change the material to a highlighted material
-      const highlightedMaterial = new THREE.MeshBasicMaterial({ color: 'pink' });
-      object.material = highlightedMaterial;
-
-      // Optionally, set a timeout to revert the material back after a certain time
-      handleWallCollision();
-
-    });
-  } else {
-
-    //console.log('----------No collision infront.',raycasterForward.ray.direction);
-
-    // gsap.to(player.current.rotation, {
-    //   duration: 0.3,
-    //   x: "-=" + Math.PI / 2,
-    //   ease: "linear",
-    // })
-  }
-};
+        // Optionally, set a timeout to revert the material back after a certain time
+        handleWallCollision();
+      });
+    } else {
+      //console.log('----------No collision infront.',raycasterForward.ray.direction);
+      // gsap.to(player.current.rotation, {
+      //   duration: 0.3,
+      //   x: "-=" + Math.PI / 2,
+      //   ease: "linear",
+      // })
+    }
+  };
 
 
 
 
-const updateCameraPosition = (delta) => {
 
-  if (!body.current) return; // Ensure player is defined
-
-
-};
-
-
-
-const { bodyposition, bodyrotation } = useControls({
-  position: {
-    value: [0, 2, 0],
-    min: [-10, -10, -10],
-    max: [10, 10, 10],
-    step: 0.1,
-    onChange: (value) => {
-      body.current.setTranslation(new THREE.Vector3(...value));
+  const { playerposition, playerrotation } = useControls({
+    position: {
+      value: [0, 0, 0], // Initial position
+      min: [-10, -10, -10], // Minimum values for each axis
+      max: [10, 10, 10], // Maximum values for each axis
+      step: 0.1, // Step size for each axis
+      onChange: (value) => {
+        // Update the position of the player mesh
+        group.current.position.set(...value);
+      },
     },
-  },
-  rotation: {
-    value: [0, 0, 0],
-    min: [-Math.PI, -Math.PI, -Math.PI],
-    max: [Math.PI, Math.PI, Math.PI],
-    step: 0.01,
-    onChange: (value) => {
-      const [x, y, z] = value;
-      const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
-      body.current.setRotation(quaternion);
-    },
-  },
-});
+    rotation: {
+      value: [0, 0, 0], // Initial rotation (in radians)
+      // min: [-Math.PI, -Math.PI, -Math.PI], // Minimum rotations for each axis
+      // max: [Math.PI, Math.PI, Math.PI], // Maximum rotations for each axis
+      step: 0.01, // Step size for each axis
+      onChange: (value) => {
+        // Create an Euler object from the rotation values
+        const euler = new Euler(...value, 'ZYX'); // Set the Euler order here as well
+        // Create a Quaternion and set it from the Euler object
+        const quaternion = new Quaternion().setFromEuler(euler);
+        // Apply the quaternion to the player's rotation
+        group.current.quaternion.copy(quaternion);
 
 
-const { playerposition, playerrotation } = useControls({
-  position: {
-    value: [0, 0, 0], // Initial position
-    min: [-10, -10, -10], // Minimum values for each axis
-    max: [10, 10, 10], // Maximum values for each axis
-    step: 0.1, // Step size for each axis
-    onChange: (value) => {
-      // Update the position of the player mesh
-      player.current.position.set(...value);
+      }
     },
-  },
-  rotation: {
-    value: [0, 0, 0], // Initial rotation (in radians)
-    min: [-Math.PI, -Math.PI, -Math.PI], // Minimum rotations for each axis
-    max: [Math.PI, Math.PI, Math.PI], // Maximum rotations for each axis
-    step: 0.01, // Step size for each axis
-    onChange: (value) => {
-      // Update the rotation of the player mesh
-      player.current.rotation.set(...value);
-    },
-  },
-});
+  });
+
+
+
+    // rotation: {
+    //   value: initialRotation, // Initial rotation from the quaternion
+    //   min: [-Math.PI, -Math.PI, -Math.PI], // Minimum rotations for each axis
+    //   max: [Math.PI, Math.PI, Math.PI], // Maximum rotations for each axis
+    //   step: 0.01, // Step size for each axis
+    //   onChange: (value) => {
+    //     // Create an Euler object from the rotation values
+    //     const euler = new THREE.Euler(...value);
+    //     // Create a Quaternion and set it from the Euler object
+    //     const quaternion = new THREE.Quaternion().setFromEuler(euler);
+    //     // Apply the quaternion to the player's rotation
+    //     player.current.quaternion.copy(quaternion);
+    //   },
+    // },
+
+    // Initial player position
+    const initialPosition = new THREE.Vector3(0, 0, 0);
+
+    useEffect(() => {
+      if (player.current) {
+        player.current.position.copy(initialPosition);
+      }
+      if (body.current) {
+        body.current.setTranslation(initialPosition, true);
+      }
+    }, []);
+
+
+    var isExecuted = false;
+
 
 
 
   useFrame((state, delta) => {
     const { forward, leftward, rightward } = getKeys();
     const playerPosition = player.current?.position;
-
 
     const bodyPosition = body.current?.translation();
     const { x: camPosX, y: camPosY, z: camPosZ } = camPosition;
@@ -750,65 +682,83 @@ const { playerposition, playerrotation } = useControls({
 
 
     if (playerPosition) {
-
-     
       if (forward) {
         setMovementState(MovementState.FORWARD);
-             // handleContinuousMovement();
-              setPlayerMove();
-        checkCollisionsBelow();
-      } 
-
-      if (player.current && state.camera) {
-       //   console.log(player.current.getWorldPosition(prevPosition.current));
-          
-       const oldPosition = new THREE.Vector3(playerPosition);
-      // player.current.position.x += 0.01;
-
-      const rotationSpeed = Math.PI / 180; // Convert degrees to radians
-      // player.current.rotation.y += rotationSpeed;
-      // player.current.rotation.x += rotationSpeed;
-
-
-       const newPosition = new THREE.Vector3();
-       player.current.getWorldPosition(newPosition);
-
-
-       // Calculate the player's orientation quaternion
-      const playerQuaternion = new THREE.Quaternion();
-      playerQuaternion.setFromEuler(player.current.rotation);
-
-             // Calculate the delta
-      const delta = newPosition.clone().sub(oldPosition);
-
-
-
-
-      // Adjust the camera position
-      const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
-            offset.applyEuler(player.current.rotation);
-      //offset.applyQuaternion(playerQuaternion);
-
-      const cameraPosition = newPosition.clone().add(offset);
-      
-
-
-      const easingFactor = 0.5;
-      state.camera.position.lerp(cameraPosition, easingFactor);
-      state.camera.lookAt(newPosition);
-
-      // Calculate camera orientation
-      // const lookAtPosition = playerPosition.clone();
-      // const lookDirection = lookAtPosition.clone().sub(cameraPosition).normalize();
-      // const upDirection = new THREE.Vector3(0, 1, 0); // Up direction
-      // const cameraQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), lookDirection);
-       //state.camera.quaternion.copy(cameraQuaternion);
-
-
-      // Optionally, update the camera reference to be used in future calculations
-      
+        // handleContinuousMovement();
+       // setPlayerMove();
       }
 
+
+  
+
+      // if (group.current && state.camera) {
+      //     //console.log(player.current.getWorldPosition(prevPosition.current));
+
+      //   const oldPosition = new THREE.Vector3(playerPosition);
+      //   // player.current.position.x += 0.01;
+
+      //   const rotationSpeed = Math.PI / 180; // Convert degrees to radians
+      //   // player.current.rotation.y += rotationSpeed;
+      //   // player.current.rotation.x += rotationSpeed;
+
+      //   const newPosition = new THREE.Vector3();
+      //   group.current.getWorldPosition(newPosition);
+
+      //   // Calculate the player's orientation quaternion
+      //   const playerQuaternion = new THREE.Quaternion();
+      //   playerQuaternion.setFromEuler(group.current.rotation);
+
+      //   // Calculate the delta
+      //   const delta = newPosition.clone().sub(oldPosition);
+
+      //   // Adjust the camera position
+      //   const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+      //   offset.applyEuler(group.current.rotation);
+      //   //offset.applyQuaternion(playerQuaternion);
+
+      //   const cameraPosition = newPosition.clone().add(offset);
+
+      //   const easingFactor = 0.5;
+      //   state.camera.position.lerp(cameraPosition, easingFactor);
+      //   state.camera.lookAt(newPosition);
+
+      //   //Calculate camera orientation
+      //   const lookAtPosition = playerPosition.clone();
+      //   const lookDirection = lookAtPosition.clone().sub(cameraPosition).normalize();
+      //   const upDirection = new THREE.Vector3(0, 1, 0); // Up direction
+      //   const cameraQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), lookDirection);
+      //   state.camera.quaternion.copy(cameraQuaternion);
+
+      //   const groupUpDirection = new THREE.Vector3(0, 1, 0);
+      //   groupUpDirection.applyQuaternion(group.current.quaternion);
+      //   state.camera.up.copy(groupUpDirection);
+
+        
+      //   //Optionally, update the camera reference to be used in future calculations
+      // }
+
+
+
+      if (group.current && state.camera) {
+        // Update player's position and rotation
+        const newPosition = new THREE.Vector3();
+        group.current.getWorldPosition(newPosition);
+  
+        // Update camera position
+        const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+        offset.applyQuaternion(group.current.quaternion);
+        const cameraPosition = newPosition.clone().add(offset);
+        state.camera.position.copy(cameraPosition);
+  
+        // Update camera orientation
+        const lookAtPosition = playerPosition.clone();
+        state.camera.lookAt(lookAtPosition);
+  
+        // Set camera up direction to match group's up direction
+        const groupUpDirection = new THREE.Vector3(0, 1, 0);
+        groupUpDirection.applyQuaternion(group.current.quaternion);
+        state.camera.up.copy(groupUpDirection);
+      }
 
       // const myVector = new THREE.Vector3(
       //   bodyPosition.x,
@@ -820,15 +770,15 @@ const { playerposition, playerrotation } = useControls({
       // const playerQuaternion = new THREE.Quaternion();
       // if (body.current.rotation) {
       //   playerQuaternion.setFromEuler(new THREE.Euler(
-      //     body.current.rotation.x, 
-      //     body.current.rotation.y, 
+      //     body.current.rotation.x,
+      //     body.current.rotation.y,
       //     body.current.rotation.z));
       // }
 
       // // Define the offset
       // const offset = new THREE.Vector3(camPosX, camPosY, camPosZ);
       // offset.applyQuaternion(playerQuaternion);
-      
+
       // const cameraPosition = myVector.clone().add(offset);
       // const cameraTarget = myVector.clone().add(new THREE.Vector3(0, 0.5, 0));
 
@@ -839,36 +789,114 @@ const { playerposition, playerrotation } = useControls({
       // // Set camera position and look at the player
       // state.camera.position.copy(smoothedCameraPosition);
       // state.camera.lookAt(smoothedCameraTarget);
-    }
+      
+         // Update arrow helpers for raycasters
+          const dir = new THREE.Vector3(0, 0, -1);
+          dir.normalize();
+          const origin = new THREE.Vector3( 0, 0, 0 );
+          const length = 1;
+          const hex = 0x000000;
+          
+          const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+          player.current.add( arrowHelper );
 
-  
+
+          const dir2 = new THREE.Vector3(0, -1, 0);
+          dir2.normalize();
+          const origin2 = new THREE.Vector3( 0, 0, 0 );
+          const length2 = 1;
+          const hex2 = 0xff0000;
+          
+          const arrowHelper2 = new THREE.ArrowHelper( dir2, origin2, length2, hex2 );
+          player.current.add( arrowHelper2 );
+
+
+
+
+        const rayFDirection = dir; // Forward direction
+        const rayDDirection = dir2; // Down direction
+        const raycasterOffset = new THREE.Vector3(0, 0, 0);
+        const rayDPosition = player.current.position;
+
+        raycasterDown.set(
+          rayDPosition.clone().add(raycasterOffset),
+        rayDDirection
+        );
+
+            const origin3 = new THREE.Vector3( 0, 0, 0 );
+            const length3 = 1;
+            const hex3 = 0xff0000;
+            
+            const arrowHelperRay = new THREE.ArrowHelper( dir2, origin3, length3, hex3 );
+            player.current.add( arrowHelper2 );
+
+
+          //  const intersectsDown = raycasterDown.intersectObjects(objp, true);
+          //  if (intersectsDown.length > 0) {
+          //   console.log("Collision below!", raycasterDown.ray.direction);
+
+          //   intersectsDown.forEach((intersection, index) => {
+          //     //console.log('Object:', intersection.object.uuid); // Log details about the intersected object
+          //     //console.log(newPosition)
+      
+          //     const object = intersection.object;
+          //     const originalMaterial = object.material;
+      
+          //     // Change the material to a highlighted material
+          //     const highlightedMaterial = new THREE.MeshBasicMaterial({
+          //       color: 0xff0000,
+          //     });
+          //     object.material = highlightedMaterial;
+      
+          //     // Optionally, set a timeout to revert the material back after a certain time
+          //   });
+
+          //  }else{
+          //   turnPlayerUp();
+          //  }
+          // const intersectsForward = raycasterForward.intersectObjects(objp, true);
+
+
+    }
   });
 
+
+  const ArrowHelper = ({ direction, color = 0x000000 }) => {
+    const origin = new THREE.Vector3(0, 0, 0);
+    const length = 2;
+  
+    return <primitive object={<THREE.ArrowHelper dir={direction} origin={origin} length={length} color={color} />} />;
+  };
+
+  
+
   return (
- 
-<>
-    <RigidBody
-         enabledRotations={[false, true, true]}
+    <>
+      <RigidBody
+        enabledRotations={[false, true, true]}
+        type="static"
+        colliders="cuboid"
+        ref={body}
+        position={[0, 3, 6]}
+        // position={player.current.position.toArray()} // Set position to player's position
+        // rotation={player.current.rotation.toArray()}
+        // lockTranslations={[true,true,true]}
+        // lockRotations={[true,true,true]}
+        mass={1}
+        restitution={0}
+        friction={0}
+      ></RigidBody>
 
-      type="static"
-      colliders="cuboid"
-      ref={body}
-      position={[0,3,6]}
-      // position={player.current.position.toArray()} // Set position to player's position
-      // rotation={player.current.rotation.toArray()}
-      // lockTranslations={[true,true,true]}
-      // lockRotations={[true,true,true]}
-      mass={1}
-      restitution={0}
-      friction={0}
-    >
 
-    </RigidBody>
-    <mesh ref={player}>
-        <perspectiveCamera ref={cameraRef} position={[0, -3, -3]} />
-        <boxGeometry  />
+      <group ref={group}>
+          <mesh ref={player} >
+          <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
+          <boxGeometry />
+          </mesh>
+          <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} /> {/* Ensure the camera is initially positioned inside the group */}
 
-      </mesh>
+      </group>
+
     </>
   );
 }
