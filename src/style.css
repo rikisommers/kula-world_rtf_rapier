@@ -122,3 +122,13 @@ body,
 {
     background: #ffffff99;
 }
+
+
+.stat{
+    position: fixed;
+    top:20px;
+    left:20px;
+    background: #000;
+    color:#ddd;
+    padding: 20px;
+}

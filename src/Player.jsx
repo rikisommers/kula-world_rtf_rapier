@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { useRapier, RigidBody } from "@react-three/rapier"; // Correct import for Quat and Euler
 import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls } from "@react-three/drei";
+import { useKeyboardControls,PivotControls } from "@react-three/drei";
 import { useEffect, useCallback, useRef, useState } from "react";
 import useGame from "./stores/useGame.jsx";
 import { gsap } from "gsap";
@@ -186,6 +186,21 @@ export default function Player({ blocks, positions, objects }) {
 
 
 
+  const isMultipleOfPi = (rotationAngle) => {
+    // Round the rotation angle to one decimal place
+    const roundedAngle = Math.round(rotationAngle * 10) / 10;
+    
+    // Check if the rounded angle is a multiple of π
+    const multipleOfPi = Math.PI;
+  
+    // Tolerance to account for floating-point precision issues
+    const tolerance = 0.1;
+  
+    return Math.abs(roundedAngle % multipleOfPi) < tolerance || Math.abs((roundedAngle % multipleOfPi) - multipleOfPi) < tolerance;
+  };
+
+  
+
   const turnPlayerLeft = () => {
     if (!isPlayerMoving) {
       setIsPlayerMoving(true);
@@ -193,15 +208,22 @@ export default function Player({ blocks, positions, objects }) {
       const targetRotation =
         Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) +
         Math.PI / 2;
-      gsap.to(group.current.rotation, {
-        duration: 0.3, // Adjust the duration for the desired speed
-        y: targetRotation,
-        ease: "linear", // Use linear easing for uniform speed
-        onComplete: () => {
-          setIsPlayerMoving(false);
-          updatePlayerUpDirection();
-        },
-      });
+
+
+        group.current.rotateY((Math.PI / 2))
+
+      // gsap.to(group.current.rotation, {
+      //   duration: 0.3, // Adjust the duration for the desired speed
+      //   y: targetRotation,
+      //   ease: "linear", // Use linear easing for uniform speed
+      //   onComplete: () => {
+
+      //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+
+      //     setIsPlayerMoving(false);
+      //     updatePlayerUpDirection();
+      //   },
+      // });
     }
   };
 
@@ -212,41 +234,61 @@ export default function Player({ blocks, positions, objects }) {
       const targetRotation =
         Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) -
         Math.PI / 2;
-      gsap.to(group.current.rotation, {
-        duration: 0.3, // Adjust the duration for the desired speed
-        y: targetRotation,
-        ease: "linear", // Use linear easing for uniform speed
-        onComplete: () => {
-          setIsPlayerMoving(false);
-          updatePlayerUpDirection();
-        },
-      });
+
+        group.current.rotateY(-(Math.PI / 2))
+
+      // gsap.to(group.current.rotation, {
+      //   duration: 0.3, // Adjust the duration for the desired speed
+      //   y: targetRotation,
+      //   ease: "linear", // Use linear easing for uniform speed
+      //   onComplete: () => {
+
+      //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+
+        
+      //     setIsPlayerMoving(false);
+      //     updatePlayerUpDirection();
+      //   },
+      // });
     }
   };
+
+  const [rotationTarget, setRotationTarget] = useState(null);
 
   const turnPlayerUp = () => {
     if (!isExecuted) {
         // Get the current Euler rotation of the group
         const currentRotation = group.current.rotation.clone();
 
+        const G = isMultipleOfPi(currentRotation.y);
+
+
         // Calculate the new x rotation taking into account the current y rotation
         const targetRotationX = Math.round(currentRotation.x / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
         
         // Calculate the new y rotation (no change in this case)
         const targetRotationY = currentRotation.y;
+        const targetRotationZ = currentRotation.z;
 
+        group.current.rotateX((Math.PI / 2))
         // Apply the new rotation
-        gsap.to(group.current.rotation, {
-            duration: 0.3,
-            x: targetRotationX,
-            y: targetRotationY, // Maintain the current y rotation
-            ease: "linear",
-            onComplete: () => {
-                updatePlayerUpDirection();
-            },
-        });
+        // gsap.to(group.current.rotation, {
+        //     duration: 0.3,
+        //     x: targetRotationX,
+  
+        //     ease: "linear",
+        //     onComplete: () => {
+      
+        //       console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+
+        //         updatePlayerUpDirection();
+        //     },
+        // });
+
     }
 };
+
+
 
   const turnPlayerDown = () => {
     // if (!isPlayerMoving) {
@@ -258,18 +300,21 @@ export default function Player({ blocks, positions, objects }) {
           const currentRotation = group.current.rotation.x;
           const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
 
-          gsap.to(group.current.rotation, {
-          duration: 0.3, // Adjust the duration for the desired speed
-          x: targetRotation,
-          ease: "linear", // Use linear easing for uniform speed
-          onComplete: () => {
-            //setIsPlayerMoving(false);
-           // cameraRef.current.rotation.copy(player.current.rotation);
-            updatePlayerUpDirection();
-          //  isExecuted = true;
-          },
+          group.current.rotateX(-(Math.PI / 2))
 
-      });
+
+          // gsap.to(group.current.rotation, {
+          // duration: 0.3, // Adjust the duration for the desired speed
+          // x: targetRotation,
+          // ease: "linear", // Use linear easing for uniform speed
+          // onComplete: () => {
+          //   //setIsPlayerMoving(false);
+          //  // cameraRef.current.rotation.copy(player.current.rotation);
+          //  console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+          //   updatePlayerUpDirection();
+          // //  isExecuted = true;
+          // },
+          // });
     }
   
   };
@@ -282,6 +327,8 @@ export default function Player({ blocks, positions, objects }) {
 
     // Set the player's up direction to match the calculated up direction
     player.current.up.copy(upDirection);
+
+    console.log('ROT:', group.current.rotation)
   };
 
   const jump = useCallback(() => {
@@ -887,13 +934,15 @@ export default function Player({ blocks, positions, objects }) {
         friction={0}
       ></RigidBody>
 
-
       <group ref={group}>
+      <PivotControls>
+
           <mesh ref={player} >
           <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
           <boxGeometry />
           </mesh>
           <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} /> {/* Ensure the camera is initially positioned inside the group */}
+          </PivotControls>
 
       </group>
 
