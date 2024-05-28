@@ -163,13 +163,13 @@ export default function Player({ blocks, positions, objects }) {
     // }
     //console.log("LPD player move", lpd);
     const moveDirection = new THREE.Vector3(0, 0, -1);
-    moveDirection.applyQuaternion(player.current.quaternion).normalize();
+    moveDirection.applyQuaternion(group.current.quaternion).normalize();
 
     const moveDistance = 1; // Adjust the distance of movement as needed
     const moveSpeed = 0.1; // Adjust the speed of movement as needed
 
     // const currentPosition = body.current.translation();
-    const currentPosition = player.current.position;
+    const currentPosition = group.current.position;
 
     const newPosition = {
       x: currentPosition.x + moveDirection.x * moveSpeed * moveDistance,
@@ -178,7 +178,7 @@ export default function Player({ blocks, positions, objects }) {
     };
 
     //body.current.setTranslation(newPosition);
-    player.current.position.copy(newPosition);
+    group.current.position.copy(newPosition);
 
     //checkCollisions();
     setIsPlayerMoving(false);
@@ -295,7 +295,7 @@ export default function Player({ blocks, positions, objects }) {
     //   setIsPlayerMoving(true);
     // }          setIsPlayerMoving(false);
 
-    if (!isExecuted) {
+   
 
           const currentRotation = group.current.rotation.x;
           const targetRotation = Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
@@ -315,7 +315,7 @@ export default function Player({ blocks, positions, objects }) {
           // //  isExecuted = true;
           // },
           // });
-    }
+    
   
   };
 
@@ -422,8 +422,8 @@ export default function Player({ blocks, positions, objects }) {
       (state) => state.forward,
       (value) => {
         if (value) {
-                    turnPlayerUp();
-          // setPlayerMove()
+          //          turnPlayerUp();
+           setPlayerMove()
           setMovementState(MovementState.FORWARD);
           console.log("direction:", livePlayerDirection);
         }
@@ -720,7 +720,7 @@ export default function Player({ blocks, positions, objects }) {
 
   useFrame((state, delta) => {
     const { forward, leftward, rightward } = getKeys();
-    const playerPosition = player.current?.position;
+    const playerPosition = group.current?.position;
 
     const bodyPosition = body.current?.translation();
     const { x: camPosX, y: camPosY, z: camPosZ } = camPosition;
@@ -732,7 +732,7 @@ export default function Player({ blocks, positions, objects }) {
       if (forward) {
         setMovementState(MovementState.FORWARD);
         // handleContinuousMovement();
-       // setPlayerMove();
+        setPlayerMove();
       }
 
 
