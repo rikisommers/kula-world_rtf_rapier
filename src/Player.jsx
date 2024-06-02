@@ -527,23 +527,23 @@ export default function Player({ blocks, positions, objects }) {
 
   // Call this function wherever you want to check for collisions below the player
 
-  // const raycasterForward = new THREE.Raycaster();
-  // const raycasterDown = new THREE.Raycaster();
+  const raycasterForward = new THREE.Raycaster();
+  const raycasterDown = new THREE.Raycaster();
 
 
 
-  const [raycasterForward, setRaycasterForward] = useState(new THREE.Vector3(0, 0, -1));
-  const [raycasterDown, setRaycasterDown] = useState(new THREE.Vector3(0, -1, 0));
+  // const [raycasterForward, setRaycasterForward] = useState(new THREE.Vector3(0, 0, -1));
+  // const [raycasterDown, setRaycasterDown] = useState(new THREE.Vector3(0, -1, 0));
   
-  raycasterDown.far = 10; // Set the far property to an appropriate value
-  raycasterForward.far = 10; // Set the far property to an appropriate value
+  raycasterDown.far = 5; // Set the far property to an appropriate value
+  raycasterForward.far = 0.5; // Set the far property to an appropriate value
 
 
 
-  const checkCollisions = (player) => {
+  const checkCollisions = () => {
 
-    const currentPosition = player.current?.position;
-    const currentRotation = player.current?.rotation;
+    const currentPosition = group.current?.position;
+    const currentRotation = group.current?.rotation;
 
     const newPosition = new THREE.Vector3(
       currentPosition.x,
@@ -569,11 +569,11 @@ export default function Player({ blocks, positions, objects }) {
 
     rayFDirection.applyAxisAngle(
       new THREE.Vector3(1, 0, 0),
-      player.current.rotation.x
+      group.current.rotation.x
     );
     rayFDirection.applyAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      player.current.rotation.y
+      group.current.rotation.y
     );
     rayFDirection.applyAxisAngle(
       new THREE.Vector3(0, 0, 1),
@@ -729,64 +729,21 @@ export default function Player({ blocks, positions, objects }) {
 
 
     if (playerPosition) {
-      if (forward) {
-        setMovementState(MovementState.FORWARD);
-        // handleContinuousMovement();
-        setPlayerMove();
-      }
 
 
-  
-
-      // if (group.current && state.camera) {
-      //     //console.log(player.current.getWorldPosition(prevPosition.current));
-
-      //   const oldPosition = new THREE.Vector3(playerPosition);
-      //   // player.current.position.x += 0.01;
-
-      //   const rotationSpeed = Math.PI / 180; // Convert degrees to radians
-      //   // player.current.rotation.y += rotationSpeed;
-      //   // player.current.rotation.x += rotationSpeed;
-
-      //   const newPosition = new THREE.Vector3();
-      //   group.current.getWorldPosition(newPosition);
-
-      //   // Calculate the player's orientation quaternion
-      //   const playerQuaternion = new THREE.Quaternion();
-      //   playerQuaternion.setFromEuler(group.current.rotation);
-
-      //   // Calculate the delta
-      //   const delta = newPosition.clone().sub(oldPosition);
-
-      //   // Adjust the camera position
-      //   const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
-      //   offset.applyEuler(group.current.rotation);
-      //   //offset.applyQuaternion(playerQuaternion);
-
-      //   const cameraPosition = newPosition.clone().add(offset);
-
-      //   const easingFactor = 0.5;
-      //   state.camera.position.lerp(cameraPosition, easingFactor);
-      //   state.camera.lookAt(newPosition);
-
-      //   //Calculate camera orientation
-      //   const lookAtPosition = playerPosition.clone();
-      //   const lookDirection = lookAtPosition.clone().sub(cameraPosition).normalize();
-      //   const upDirection = new THREE.Vector3(0, 1, 0); // Up direction
-      //   const cameraQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), lookDirection);
-      //   state.camera.quaternion.copy(cameraQuaternion);
-
-      //   const groupUpDirection = new THREE.Vector3(0, 1, 0);
-      //   groupUpDirection.applyQuaternion(group.current.quaternion);
-      //   state.camera.up.copy(groupUpDirection);
-
-        
-      //   //Optionally, update the camera reference to be used in future calculations
-      // }
 
 
 
       if (group.current && state.camera) {
+
+
+        if (forward) {
+          setMovementState(MovementState.FORWARD);
+         // handleContinuousMovement(state, delta);
+          setPlayerMove();
+         // checkCollisions();
+        }
+        
         // Update player's position and rotation
         const newPosition = new THREE.Vector3();
         group.current.getWorldPosition(newPosition);
@@ -852,56 +809,84 @@ export default function Player({ blocks, positions, objects }) {
           dir2.normalize();
           const origin2 = new THREE.Vector3( 0, 0, 0 );
           const length2 = 1;
-          const hex2 = 0xff0000;
+          const hex2 = 0x7600ff;
           
           const arrowHelper2 = new THREE.ArrowHelper( dir2, origin2, length2, hex2 );
           player.current.add( arrowHelper2 );
 
 
+  
 
+          // Define the forward and downward direction vectors
+            const rayFDirection = dir.clone(); // Forward direction
+            const rayDDirection = new THREE.Vector3(0, -1, 0); // Down direction (assuming Y-axis is up)
 
-        const rayFDirection = dir; // Forward direction
-        const rayDDirection = dir2; // Down direction
-        const raycasterOffset = new THREE.Vector3(0, 0, 0);
-        const rayDPosition = player.current.position;
+            // Define the raycaster offset and position
+            const raycasterOffset = new THREE.Vector3(0, 0, 0);
+            const rayDPosition = group.current.position.clone();
 
-        raycasterDown.set(
-          rayDPosition.clone().add(raycasterOffset),
-        rayDDirection
-        );
+            // Apply the group's rotation to the rayDDirection vector
+            rayDDirection.applyQuaternion(group.current.quaternion);
 
-            const origin3 = new THREE.Vector3( 0, 0, 0 );
+            // Set the raycaster's origin and direction
+            raycasterDown.set(rayDPosition.add(raycasterOffset), rayDDirection);
+
+            // Visualize the downward ray direction using ArrowHelper
+            const origin3 = new THREE.Vector3(0, 0, 0);
             const length3 = 1;
-            const hex3 = 0xff0000;
-            
-            const arrowHelperRay = new THREE.ArrowHelper( dir2, origin3, length3, hex3 );
-            player.current.add( arrowHelper2 );
+            const hex3 = 0x00ff9f;
+
+            const arrowHelperRay = new THREE.ArrowHelper(rayDDirection, origin3, length3, hex3);
+          group.current.add(arrowHelperRay);
 
 
-          //  const intersectsDown = raycasterDown.intersectObjects(objp, true);
-          //  if (intersectsDown.length > 0) {
-          //   console.log("Collision below!", raycasterDown.ray.direction);
 
-          //   intersectsDown.forEach((intersection, index) => {
-          //     //console.log('Object:', intersection.object.uuid); // Log details about the intersected object
-          //     //console.log(newPosition)
+          const intersectsDown = raycasterDown.intersectObjects(objp, true);
+           if (intersectsDown.length > 0) {
+
+
+            console.log("Collision below!", raycasterDown.ray.direction);
+
+            // Get the first intersection
+            const intersection = intersectsDown[0];
+            const intersectionPoint = intersection.point; // The point of intersection
+  
+  
+            // Optionally, adjust the intersection point by the player's height
+            // Assuming player height is represented by its scale and we adjust for half the height
+            const playerHeight = player.current.scale.y;
+            const adjustedY = intersectionPoint.y + playerHeight;
+
+            // // Set the player's Y position to the adjusted intersection point
+            // group.current.position.y = adjustedY;
+
+
+            // Output the intersection details
+            console.log('Intersection Point:', intersectionPoint);
+            console.log('Adjusted Player Y Position:', adjustedY);
+
+
+            intersectsDown.forEach((intersection, index) => {
+              const closestIntersection = intersectsDown[0]; // Get the first (closest) intersection
+              console.log('Object:', closestIntersection.object.uuid); // Log details about the intersected object
+          
+              const object = closestIntersection.object;
+              const originalMaterial = object.material;
       
-          //     const object = intersection.object;
-          //     const originalMaterial = object.material;
+              // Change the material to a highlighted material
+              const highlightedMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ff9f,
+              });
+              object.material = highlightedMaterial;
       
-          //     // Change the material to a highlighted material
-          //     const highlightedMaterial = new THREE.MeshBasicMaterial({
-          //       color: 0xff0000,
-          //     });
-          //     object.material = highlightedMaterial;
-      
-          //     // Optionally, set a timeout to revert the material back after a certain time
-          //   });
+              // Optionally, set a timeout to revert the material back after a certain time
+            });
 
-          //  }else{
-          //   turnPlayerUp();
-          //  }
-          // const intersectsForward = raycasterForward.intersectObjects(objp, true);
+           }else{
+            // turnPlayerDown();
+            // stopPropagation();
+           }
+          const intersectsForward = raycasterForward.intersectObjects(objp, true);
 
 
     }
@@ -935,14 +920,11 @@ export default function Player({ blocks, positions, objects }) {
       ></RigidBody>
 
       <group ref={group}>
-      <PivotControls>
-
           <mesh ref={player} >
           <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
           <boxGeometry />
           </mesh>
           <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} /> {/* Ensure the camera is initially positioned inside the group */}
-          </PivotControls>
 
       </group>
 

@@ -50,7 +50,7 @@ root.render(
       <Perf position="bottom-left" />
 
       <axesHelper args={[1]} />
-      <color attach="background" args={['white']} />
+      <color attach="background" args={['#7600ff']} />
 
     </Canvas>
     <Interface />
