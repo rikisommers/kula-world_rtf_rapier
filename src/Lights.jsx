@@ -11,15 +11,6 @@ export default function Lights()
         ambient_color: '#7600ff',
       })
 
- 
-    // useFrame((state) =>
-    // {
-    //     light.current.position.z = state.camera.position.z + 1 - 4
-    //     light.current.target.position.z = state.camera.position.z - 4
-    //     light.current.target.updateMatrixWorld()
-
-    // })
-
 
     return <>
         <directionalLight

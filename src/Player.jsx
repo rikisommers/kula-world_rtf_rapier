@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { useRapier, RigidBody } from "@react-three/rapier"; // Correct import for Quat and Euler
 import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls, PivotControls } from "@react-three/drei";
+import { useKeyboardControls, PivotControls, useGLTF } from "@react-three/drei";
 import { useEffect, useCallback, useRef, useState, useMemo } from "react";
 import useGame from "./stores/useGame.jsx";
 import { gsap } from "gsap";
@@ -23,15 +23,29 @@ const directionMap = {
   3: "right",
 };
 
+const easingOptions = { easeIn: 0.05, easeOut: 0.05 };
+
 export default function Player({ blocks, positions, objects }) {
+
+
+
+
   const [blockPositions, setBlockPositions] = useState(0);
   const gravityDirection = useGame((state) => state.gravityDirection);
   const setGravityDirection = useGame((state) => state.setGravityDirection);
   const setCameraDirection = useGame((state) => state.setCameraDirection);
   const objp = useGame((state) => state.objectPositions);
+  const [isMoving, setIsMoving] = useState(false);
+  const [isJumping, setIsJumping] = useState(false);
+
+  const [rotationSpeed, setRotationSpeed] = useState(0);
 
   // console.log('___________-__-_-_',objp)
   //console.log(blocks, positions, objects)
+
+  const ball = useGLTF("./ball2.glb");
+
+  console.log(ball);
 
   const MovementState = {
     IDLE: "idle",
@@ -59,6 +73,7 @@ export default function Player({ blocks, positions, objects }) {
   const [hasHitWall, setHasHitWall] = useState(false);
   const [hasHitEdge, setHasHitEdge] = useState(false);
   const [isPlayerMoving, setIsPlayerMoving] = useState(false);
+  const [isMovingForward, setIsMovingForward] = useState(false);
 
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
@@ -73,7 +88,7 @@ export default function Player({ blocks, positions, objects }) {
   const cameraRef = useRef();
   const group = useRef();
 
-
+  const deltaTime = 1 / 60; // Assuming 60 FPS, adjust if needed
 
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
@@ -97,6 +112,11 @@ export default function Player({ blocks, positions, objects }) {
     });
 
     setBlockPositions(mergedPositions);
+
+    // if (player.current) {
+    //   player.current.rotateY(0, Math.PI / 2, 0);
+    // }
+    
   }, [positions]);
 
   //------------------------------------------------------------------------------------------------------------------
@@ -106,41 +126,9 @@ export default function Player({ blocks, positions, objects }) {
 
   const updatePlayerUpDirection = () => {
     // Set the new up direction to be negative Y-axis
-    group.current.up.set(0, 1, 0);  // Assuming the negative Y-axis is down
-    console.log("Player up direction updated.");
+    group.current.up.set(0, 1, 0); // Assuming the negative Y-axis is down
+    //console.log("Player up direction updated.");
   };
-
-
-  const setPlayerMove = useCallback(() => {
-    //    console.log("moving", hasHitWall);
-    setIsPlayerMoving(true);
-    //    isExecuted = true;
-
-    // if (hasHitWall) {
-    //   setHasHitWall(false)
-    // }
-    //console.log("LPD player move", lpd);
-    const moveDirection = new THREE.Vector3(0, 0, -1);
-    moveDirection.applyQuaternion(group.current.quaternion).normalize();
-
-    const moveDistance = 1; // Adjust the distance of movement as needed
-    const moveSpeed = 0.1; // Adjust the speed of movement as needed
-
-    // const currentPosition = body.current.translation();
-    const currentPosition = group.current.position;
-
-    const newPosition = {
-      x: currentPosition.x + moveDirection.x * moveSpeed * moveDistance,
-      y: currentPosition.y + moveDirection.y * moveSpeed * moveDistance,
-      z: currentPosition.z + moveDirection.z * moveSpeed * moveDistance,
-    };
-
-    //body.current.setTranslation(newPosition);
-    group.current.position.copy(newPosition);
-
-    //checkCollisions();
-    setIsPlayerMoving(false);
-  }, []);
 
   const isMultipleOfPi = (rotationAngle) => {
     // Round the rotation angle to one decimal place
@@ -159,53 +147,45 @@ export default function Player({ blocks, positions, objects }) {
   };
 
   const turnPlayerLeft = () => {
-    if (!isPlayerMoving) {
-      setIsPlayerMoving(true);
-      const currentRotation = group.current.rotation.y;
-      const targetRotation =
-        Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) +
-        Math.PI / 2;
+    const currentRotation = group.current.rotation.y;
+    const targetRotation =
+      Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
 
-      group.current.rotateY(Math.PI / 2);
+    group.current.rotateY(Math.PI / 2);
 
-      // gsap.to(group.current.rotation, {
-      //   duration: 0.3, // Adjust the duration for the desired speed
-      //   y: targetRotation,
-      //   ease: "linear", // Use linear easing for uniform speed
-      //   onComplete: () => {
+    // gsap.to(group.current.rotation, {
+    //   duration: 0.3, // Adjust the duration for the desired speed
+    //   y: targetRotation,
+    //   ease: "linear", // Use linear easing for uniform speed
+    //   onComplete: () => {
 
-      //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+    //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
 
-      //     setIsPlayerMoving(false);
-      //     updatePlayerUpDirection();
-      //   },
-      // });
-    }
+    //     setIsPlayerMoving(false);
+    //     updatePlayerUpDirection();
+    //   },
+    // });
   };
 
   const turnPlayerRight = () => {
-    if (!isPlayerMoving) {
-      setIsPlayerMoving(true);
-      const currentRotation = group.current.rotation.y;
-      const targetRotation =
-        Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) -
-        Math.PI / 2;
+    const currentRotation = group.current.rotation.y;
+    const targetRotation =
+      Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
 
-      group.current.rotateY(-(Math.PI / 2));
+    group.current.rotateY(-(Math.PI / 2));
 
-      // gsap.to(group.current.rotation, {
-      //   duration: 0.3, // Adjust the duration for the desired speed
-      //   y: targetRotation,
-      //   ease: "linear", // Use linear easing for uniform speed
-      //   onComplete: () => {
+    // gsap.to(group.current.rotation, {
+    //   duration: 0.3, // Adjust the duration for the desired speed
+    //   y: targetRotation,
+    //   ease: "linear", // Use linear easing for uniform speed
+    //   onComplete: () => {
 
-      //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+    //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
 
-      //     setIsPlayerMoving(false);
-      //     updatePlayerUpDirection();
-      //   },
-      // });
-    }
+    //     setIsPlayerMoving(false);
+    //     updatePlayerUpDirection();
+    //   },
+    // });
   };
 
   const [rotationTarget, setRotationTarget] = useState(null);
@@ -243,53 +223,10 @@ export default function Player({ blocks, positions, objects }) {
     }
   };
 
-  const turnPlayerDown = () => {
-    // Disable player movement
-    setIsPlayerMoving(false);
-  
- // Rotate the player by 90 degrees around the X-axis
- group.current.rotateX(-Math.PI / 2);
 
- // Ensure the quaternion is normalized
- group.current.quaternion.normalize();
 
- // Update the up direction
- //updatePlayerUpDirection();
-  
-    // Update the up direction of the player
-   // updatePlayerUpDirection();
-    group.current.up.set(0, 1, 0);  // Assuming the negative Y-axis is down
 
-    console.log("Player rotated down and reset orientation.");
-  };
-  
-  const jump = useCallback(() => {
-    const playerRotation = player.current.rotation.clone();
-    const impulseDirection = new THREE.Vector3(0, 1, 0);
-    impulseDirection.applyQuaternion(
-      new THREE.Quaternion().setFromEuler(playerRotation)
-    );
 
-    const impulseStrength = 20; // Adjust the strength of the impulse as needed
-    body.current.applyImpulse({
-      x: impulseDirection.x * impulseStrength,
-      y: impulseDirection.y * impulseStrength,
-      z: impulseDirection.z * impulseStrength,
-    });
-  }, []);
-
-  const reset = () => {
-    console.log("reset");
-  };
-
-  const handleContinuousMovement = useCallback(() => {
-    if (isKeyPressed && movementState === MovementState.FORWARD) {
-      console.log("hcm");
-      setPlayerMove();
-    }
-  }, [isKeyPressed, movementState]);
-
- 
 
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
@@ -301,15 +238,11 @@ export default function Player({ blocks, positions, objects }) {
     ambient_color: "#7600ff",
   });
 
-  const { yPosition } = useControls({
-    yPosition: { value: 0, min: -10, max: 10, step: 0.1 }
-  });
 
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
-
 
   useEffect(() => {
     const unsubscribeReset = useGame.subscribe(
@@ -328,8 +261,10 @@ export default function Player({ blocks, positions, objects }) {
       (value) => {
         if (value) {
           turnPlayerDown();
-
+          setIsMoving(true);
           //setMovementState(MovementState.BACKWARD);
+        } else {
+          setIsMoving(false);
         }
       }
     );
@@ -340,8 +275,12 @@ export default function Player({ blocks, positions, objects }) {
         if (value) {
           //          turnPlayerUp();
           setPlayerMove();
+          setIsMoving(true);
+
           setMovementState(MovementState.FORWARD);
           //console.log("direction:", livePlayerDirection);
+        } else {
+          setIsMoving(false);
         }
       }
     );
@@ -351,6 +290,9 @@ export default function Player({ blocks, positions, objects }) {
       (value) => {
         if (value) {
           turnPlayerLeft();
+          setIsMoving(true);
+        } else {
+          setIsMoving(false);
         }
       }
     );
@@ -360,6 +302,9 @@ export default function Player({ blocks, positions, objects }) {
       (value) => {
         if (value) {
           turnPlayerRight();
+          setIsMoving(true);
+        } else {
+          setIsMoving(true);
         }
       }
     );
@@ -367,7 +312,9 @@ export default function Player({ blocks, positions, objects }) {
     const unsubscribeJump = subscribeKeys(
       (state) => state.jump,
       (value) => {
-        if (value) jump();
+        if (value) {
+           jump();
+        }
       }
     );
     return () => {
@@ -411,7 +358,9 @@ export default function Player({ blocks, positions, objects }) {
       );
       group.current.add(arrowHelperForward.current);
 
-      const ddir = new THREE.Vector3(0, -1, 0).applyQuaternion(group.current.quaternion).normalize();
+      const ddir = new THREE.Vector3(0, -1, 0)
+        .applyQuaternion(group.current.quaternion)
+        .normalize();
       const hex2 = "yellow";
 
       arrowHelperDown.current = new THREE.ArrowHelper(
@@ -424,7 +373,6 @@ export default function Player({ blocks, positions, objects }) {
     }
 
     // Add downward movement check after the initial setup
-
   }, []);
 
   const updateGroupRaycasters = () => {
@@ -435,19 +383,24 @@ export default function Player({ blocks, positions, objects }) {
         .normalize();
       const position = group.current.position.clone();
       const offset = new THREE.Vector3(0, 0, 0); // Adjust offset if necessary
-  
+
       raycasterForward.set(position.add(offset), forward);
-  
+
       // Update downward raycaster
       const downward = new THREE.Vector3(0, -1, 0)
         .applyQuaternion(group.current.quaternion)
         .normalize();
       raycasterDown.set(position.add(offset), downward);
+    }
   };
-}
 
 
-  
+  const checkEdges = () => {
+    const intersects = raycasterDown.intersectObjects(objp, true);
+    return intersects.length === 0;
+  };
+
+
   const hightlightObjects = () => {
     const intersectsDown = raycasterDown.intersectObjects(objp, true);
 
@@ -457,8 +410,7 @@ export default function Player({ blocks, positions, objects }) {
 
         const object = closestIntersection.object;
 
-       // const { object, faceIndex } = intersection;
-
+        // const { object, faceIndex } = intersection;
 
         const originalMaterial = object.material;
 
@@ -487,168 +439,303 @@ export default function Player({ blocks, positions, objects }) {
     }
   };
 
-
-
   // Do this instead -- console.log( raycaster.ray.origin.distanceTo( intersects[0].point ) );
 
   const moveGroupDownIfIntersecting = () => {
     if (group.current) {
       // Update the raycaster direction to point downwards relative to the group
-      const down = new THREE.Vector3(0, -1, 0)
-        .applyQuaternion(group.current.quaternion);
-  
+      const down = new THREE.Vector3(0, -1, 0).applyQuaternion(
+        group.current.quaternion
+      );
+
       // Normalize the direction vector
       down.normalize();
-  
+
       // Find the maximum absolute component value
-      const maxComponent = Math.max(Math.abs(down.x), Math.abs(down.y), Math.abs(down.z));
-  
+      const maxComponent = Math.max(
+        Math.abs(down.x),
+        Math.abs(down.y),
+        Math.abs(down.z)
+      );
+
       // If the maximum component is greater than 1, scale the vector down
       if (maxComponent > 1) {
         down.divideScalar(maxComponent);
       }
-  
-      console.log('Clamped down direction:', down);
-  
+
+      //console.log('Clamped down direction:', down);
+
       const position = group.current.position.clone();
-  
+
       // Set the raycaster to start from the group's current position and point downwards
       raycasterDown.set(position, down);
-  
+
       // Check for intersections with objects
       const intersectsDown = raycasterDown.intersectObjects(objp, true);
-  
+
       if (intersectsDown.length > 0) {
+        setHasHitEdge(false)
+        setRotationComplete(false);
+
         const closestIntersection = intersectsDown[0]; // Get the first (closest) intersection
         const intersectionPoint = closestIntersection.point; // The point of intersection
-  
-          // Move the group to the intersection point
-          const dist = raycasterDown.ray.origin.distanceTo(intersectionPoint);
-          const movementVector = down.clone().multiplyScalar(dist);
 
-          // Update the group's position
-          group.current.position.add(movementVector);
-  
-        console.log("ray down:", raycasterDown.ray.direction);
-        console.log("group down:", down);
-        console.log("dist:", dist);
-  
+        // Move the group to the intersection point
+        const dist =
+          raycasterDown.ray.origin.distanceTo(intersectionPoint) -
+          player.current.scale.y / 2;
+        const movementVector = down.clone().multiplyScalar(dist);
+
+        // Update the group's position
+       if(!isJumping){
+        group.current.position.add(movementVector);
+       }
+        //console.log("ray down:", raycasterDown.ray.direction);
+        //console.log("group down:", down);
+        //console.log("dist:", dist);
       } else {
-        console.log("No object below the group.");
+        //console.log("No object below the group.");
+        turnPlayerDown();
+        setHasHitEdge(true)
+
+
       }
     }
   };
-  
 
 
-
-
-  // useEffect(() => {
-    
-  //   const handleGroupChange = () => {
-  //     updateGroupRaycasters();
-  //     hightlightObjects();
-  //     moveGroupDownIfIntersecting();
-  //   };
-  
-  //   // Add event listeners for relevant group events
-  //   const groupNode = group.current;
-  //   groupNode.addEventListener('change', handleGroupChange);
-  
-  //   // Cleanup function to remove event listener when component unmounts
-  //   return () => {
-  //     groupNode.removeEventListener('change', handleGroupChange);
-  //   };
-  // }, [group.current]);
-
-
-  // Component state initialization
-  const [targetPosition, setTargetPosition] = useState(null);
-  const [isMovingDown, setIsMovingDown] = useState(false);
 
   // Function to lerp between two positions
   function lerp(start, end, alpha) {
     return start + (end - start) * alpha;
   }
 
+
+
+
+
+
+  const updateCamera = (state) => {
+    const playerPosition = group.current?.position;
+
+    // Update player's position and rotation
+    const newPosition = new THREE.Vector3();
+    group.current.getWorldPosition(newPosition);
+
+    // Update camera position
+    const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+    offset.applyQuaternion(group.current.quaternion);
+    const cameraPosition = newPosition.clone().add(offset);
+    state.camera.position.copy(cameraPosition);
+
+    // Update camera orientation
+    const lookAtPosition = playerPosition.clone();
+    state.camera.lookAt(lookAtPosition);
+
+    // Set camera up direction to match group's up direction
+    const groupUpDirection = new THREE.Vector3(0, 1, 0);
+    groupUpDirection.applyQuaternion(group.current.quaternion);
+    state.camera.up.copy(groupUpDirection);
+  };
+
+
+
+
+
+
+  const setPlayerMove = useCallback(() => {
+    const moveDirection = new THREE.Vector3(0, 0, -1);
+    moveDirection.applyQuaternion(group.current.quaternion).normalize();
+
+    const moveSpeed = 0.15;
+    group.current.position.add(moveDirection.multiplyScalar(moveSpeed));
+  }, []);
+
+  const [previousPosition, setPreviousPosition] = useState(new THREE.Vector3());
+
+
+
+
+  const [rotationComplete, setRotationComplete] = useState(false);
+
+
+
+  const turnPlayerDown = () => {
+      if(!rotationComplete){
+        group.current.rotateX(-Math.PI / 2);
+        group.current.quaternion.normalize();
+        group.current.up.set(0, 1, 0);
+        setRotationComplete(true);
+        setHasHitEdge(false);
+      }
+  };
+
+
+
+
+
+  const jump = useCallback(() => {
+
+    setIsJumping(true);
+    // Remove Rapier dependencies
+    const playerPosition = group.current.position;
+
+    // Use raycasterDown to check distance to ground
+    updateGroupRaycasters();
+
+    // Use opposite direction of raycasterDown to define up direction
+    const upDirection = raycasterDown.ray.direction.clone().negate();
+
+    // Move group.current up 3x scale.y
+    const targetPosition = playerPosition.clone().add(upDirection.multiplyScalar(1 * player.current.scale.y));
+
+    // Move group.current down to closest intersect over 1 sec
+    const intersectsDown = raycasterDown.intersectObjects(objp, true);
+    const closestIntersection = intersectsDown[0];
+    const intersectionPoint = closestIntersection ? closestIntersection.point : playerPosition;
+    const duration = 0.3; // Duration of movement in seconds
+    
+    gsap.to(group.current.position, { 
+
+
+      x: targetPosition.x, 
+      y: targetPosition.y, 
+      z: targetPosition.z, 
+      duration,
+      ease: "inOut", // Use bounce easing
+      onComplete: () => {
+        
+              // If no intersection, fall back to original position
+              gsap.to(group.current.position, { 
+                  x: group.current.position.x, 
+                  y: playerPosition.y - 1 * player.current.scale.y, 
+                  z: playerPosition.z, 
+                  duration,
+                  ease: "inOut", // Use bounce easing
+                  onComplete: () => {
+                    // Set isMoving back to true after jump is complete
+                    if (getKeys().forward) {
+                      // Set isMoving back to true after jump is complete only if forward key is down
+                      setIsJumping(false);
+                  }
+                  },
+              });
+          
+  
+           
+      } 
+  });
+}, []);
+
+
+
+const gsapRef = useRef(null); // Reference to the GSAP animation instance
+
+
+const idle = useCallback(() => {
+  if (!isMoving) {
+    gsapRef.current = gsap.to(group.current.scale, {
+      y: 0.75,
+      duration: 0.7,
+      ease: 'power1.inOut',
+      repeat: -1,
+      yoyo: true,
+    });
+  }
+}, [isMoving]);
+
+useEffect(() => {
+  if (!isMoving) {
+    idle();
+  } else if (gsapRef.current) {
+    gsapRef.current.kill(); // Stop the idle animation if player starts moving
+    gsap.to(group.current.scale, { y: 1, duration: 0.5 }); // Reset scale to 100%
+  }
+}, [isMoving, idle]);
+
+
+
+
+
+
+
+
   useFrame((state, delta) => {
     const { forward, leftward, rightward } = getKeys();
     const playerPosition = group.current?.position;
 
-    if (playerPosition) {
-      if (group.current && state.camera) {
-        if (forward) {
-          setMovementState(MovementState.FORWARD);
-          // handleContinuousMovement(state, delta);
-          setPlayerMove();
-          // checkCollisions();
-        }
+    console.log('is moving: ',isMoving)
+    console.log('has hit edge: ',hasHitEdge)
+    // Define variables for rotation speed and easing
+    let rotationSpeed = 0.3; // Base rotation speed
+    const maxRotationSpeed = 0.5; // Maximum rotation speed
+    const acceleration = 0.01; // Rate of rotation acceleration
+    const deceleration = 0.02; // Rate of rotation deceleration
 
-        // Update player's position and rotation
-        const newPosition = new THREE.Vector3();
-        group.current.getWorldPosition(newPosition);
+    if (forward) {
 
-        // Update camera position
-        const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
-        offset.applyQuaternion(group.current.quaternion);
-        const cameraPosition = newPosition.clone().add(offset);
-        state.camera.position.copy(cameraPosition);
+      // gsap.to(player.current.scale, {
+      //   y: 1,
+      //   duration: 0.5, // Duration of the animation in seconds
+      //   ease: 'power1.inOut', // Easing function for smooth animation
+      // });
 
-        // Update camera orientation
-        const lookAtPosition = playerPosition.clone();
-        state.camera.lookAt(lookAtPosition);
+      rotationSpeed += acceleration * delta; // Accelerate rotation
+      rotationSpeed = Math.min(rotationSpeed, maxRotationSpeed); // Cap rotation speed
 
-        // Set camera up direction to match group's up direction
-        const groupUpDirection = new THREE.Vector3(0, 1, 0);
-        groupUpDirection.applyQuaternion(group.current.quaternion);
-        state.camera.up.copy(groupUpDirection);
-      }
-
-     //updateGroupRaycasters();
-     updateGroupRaycasters();
+      setPlayerMove();
+      updateGroupRaycasters();
       hightlightObjects();
       moveGroupDownIfIntersecting();
-   // Set the raycaster origin to the group's position and direction to downwards
+    } else {
+
  
-      // // Smoothly move the player down to the target position
-      // if (isMovingDown && targetPosition !== null) {
-      //   const newY = lerp(group.current.position.y, targetPosition, delta * 10); // Adjust the speed as needed
-      // //  group.current.position.y = newY;
 
-      //   // Stop moving when close enough to the target position
-      //   if (Math.abs(group.current.position.y - targetPosition) < 0.01) {
-      //     group.current.position.y = targetPosition;
-      //     setIsMovingDown(false);
-      //     setTargetPosition(null);
-      //   }
-      // }
+      // Decrease rotation speed if not moving forward
+      rotationSpeed -= deceleration * delta; // Decelerate rotation
+      rotationSpeed = Math.max(rotationSpeed, 0); // Ensure rotation speed is not negative
+    }
 
-      
-      // console.log("-------", group.current.position.y);
-      // console.log("-GOING DOWN------", isMovingDown);
+
+    // Update camera only if there is movement
+    if (isMoving) {
+      updateCamera(state);
+    }else{
+
+    }
+
+    // FAKE -- Calculate distance moved
+    if (forward) {
+      player.current.rotation.x -= rotationSpeed;
     }
   });
 
-  return (
-    <>
-      <RigidBody
-        enabledRotations={[false, true, true]}
-        type="static"
-        colliders="cuboid"
-        ref={body}
-        position={[0, 3, 6]}
-        mass={1}
-        restitution={0}
-        friction={0}
-      ></RigidBody>
+  //FIXED -- Calculate distance moved
+  // const currentPosition = group.current.position.clone();
+  // const distanceMoved = currentPosition.distanceTo(previousPosition);
+  // setPreviousPosition(currentPosition);
 
-      <group ref={group}>
-        <mesh ref={player}>
-          <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
-          <boxGeometry />
-        </mesh>
-        <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} />{" "}
-      </group>
-    </>
+  // // Calculate rotation angle based on distance moved
+  // const ballRadius = 1; // Adjust this value based on your ball's radius
+  // const rotationAngle = distanceMoved / ballRadius;
+
+  // // Rotate the ball
+  // player.current.rotation.x -= rotationAngle;
+
+  return (
+    <group ref={group}>
+      <mesh ref={player}>
+        <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
+        <boxGeometry />
+      </mesh>
+      <mesh
+        ref={player}
+        scale={player.scale}
+        material={ball.scene.children[0].material}
+      >
+        <sphereGeometry args={[0.5, 64, 32]} />
+      </mesh>
+      <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} />{" "}
+    </group>
   );
 }
