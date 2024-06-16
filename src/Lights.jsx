@@ -1,22 +1,22 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
 import { useControls } from 'leva'
 
 export default function Lights()
 {
     const light = useRef()
     
-    const color = useControls({
-        directional_color: '#00ff9f',
-        ambient_color: '#7600ff',
+    const world_light = useControls({
+        directional_color: '#ff00d2',
+        ambient_color: '#d3acff',
+        ambient_intensity:1,
       })
 
 
     return <>
         <directionalLight
             ref={light}
-            color={color.directional_color}
-            position={ [ 0, 6, 1 ] }
+            color={world_light.directional_color}
+            position={ [ 0, 10, 1 ] }
             intensity={ .5 }
             shadow-mapSize={ [ 1024, 1024 ] }
             shadow-camera-near={ 1 }
@@ -27,7 +27,7 @@ export default function Lights()
             shadow-camera-left={ - 10 }
         />
         <ambientLight
-         color={color.ambient_color} 
- intensity={ 0.5 } />
+         color={world_light.ambient_color} 
+        intensity={world_light.ambient_intensity } />
     </>
 }

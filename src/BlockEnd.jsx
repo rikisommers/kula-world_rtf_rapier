@@ -1,6 +1,6 @@
 import { RigidBody } from "@react-three/rapier";
 import useGame from './stores/useGame.jsx'
-import { playEnd } from "./Audio.jsx";
+import { useTexture } from "@react-three/drei"
 
 
 export default function BlockEnd({
@@ -10,7 +10,12 @@ export default function BlockEnd({
 }) {
 
   const restart = useGame((state) => state.restart)
-
+  // const [colorMap, displacementMap, normalMap, roughnessMap] = useTexture([
+  //   '../pub/rock-color.png',
+  //   './rock-disp.png',
+  //   './rock-normal',
+  //   './rock-disp.png',
+  // ])
 
   return (
     <RigidBody 
@@ -24,7 +29,6 @@ export default function BlockEnd({
         "end",
       // manifold.solverContactPoint(0),
       );
-      playEnd(),
       restart()
       if (other.rigidBodyObject) {
         // console.log(
@@ -41,9 +45,17 @@ export default function BlockEnd({
 
     <mesh 
       name="floor"
+      type="end"
       geometry={geometry}
       material={material}
-      />
+      >
+        {/* <meshStandardMaterial
+          map={colorMap}
+          displacementMap={displacementMap}
+          normalMap={normalMap}
+          roughnessMap={roughnessMap}
+        ></meshStandardMaterial> */}
+      </mesh>
 
     </group>
     </RigidBody>

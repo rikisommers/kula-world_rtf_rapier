@@ -6,6 +6,7 @@ import { useEffect, useCallback, useRef, useState, useMemo } from "react";
 import useGame from "./stores/useGame.jsx";
 import { gsap } from "gsap";
 import { useThree } from "@react-three/fiber";
+
 import {
   PerspectiveCamera,
   Euler,
@@ -15,7 +16,7 @@ import {
 } from "three";
 
 import { useControls } from "leva";
-
+import { useAudioControls} from './Audio.jsx'
 const directionMap = {
   0: "forward",
   1: "left",
@@ -27,7 +28,22 @@ const easingOptions = { easeIn: 0.05, easeOut: 0.05 };
 
 export default function Player({ blocks, positions, objects }) {
 
+  const {
+    playStart,
+    playJump,
+    playMove,
+    playEnd,
+    playPop,
+    playLand,
+    playCoin,
+    playFood,
+    playFall,
+  } = useAudioControls();
 
+
+  const start = useGame((state) => state.start);
+  const end = useGame((state) => state.end);
+  const restart = useGame((state) => state.restart);
 
 
   const [blockPositions, setBlockPositions] = useState(0);
@@ -45,7 +61,7 @@ export default function Player({ blocks, positions, objects }) {
 
   const ball = useGLTF("./ball2.glb");
 
-  console.log(ball);
+  //console.log(ball);
 
   const MovementState = {
     IDLE: "idle",
@@ -75,9 +91,6 @@ export default function Player({ blocks, positions, objects }) {
   const [isPlayerMoving, setIsPlayerMoving] = useState(false);
   const [isMovingForward, setIsMovingForward] = useState(false);
 
-  const start = useGame((state) => state.start);
-  const end = useGame((state) => state.end);
-  const restart = useGame((state) => state.restart);
 
   const [subscribeKeys, getKeys] = useKeyboardControls();
   const [isKeyPressed, setIsKeyPressed] = useState(false);
@@ -124,104 +137,12 @@ export default function Player({ blocks, positions, objects }) {
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
 
-  const updatePlayerUpDirection = () => {
-    // Set the new up direction to be negative Y-axis
-    group.current.up.set(0, 1, 0); // Assuming the negative Y-axis is down
-    //console.log("Player up direction updated.");
-  };
 
-  const isMultipleOfPi = (rotationAngle) => {
-    // Round the rotation angle to one decimal place
-    const roundedAngle = Math.round(rotationAngle * 10) / 10;
 
-    // Check if the rounded angle is a multiple of π
-    const multipleOfPi = Math.PI;
-
-    // Tolerance to account for floating-point precision issues
-    const tolerance = 0.1;
-
-    return (
-      Math.abs(roundedAngle % multipleOfPi) < tolerance ||
-      Math.abs((roundedAngle % multipleOfPi) - multipleOfPi) < tolerance
-    );
-  };
-
-  const turnPlayerLeft = () => {
-    const currentRotation = group.current.rotation.y;
-    const targetRotation =
-      Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
-
-    group.current.rotateY(Math.PI / 2);
-
-    // gsap.to(group.current.rotation, {
-    //   duration: 0.3, // Adjust the duration for the desired speed
-    //   y: targetRotation,
-    //   ease: "linear", // Use linear easing for uniform speed
-    //   onComplete: () => {
-
-    //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
-
-    //     setIsPlayerMoving(false);
-    //     updatePlayerUpDirection();
-    //   },
-    // });
-  };
-
-  const turnPlayerRight = () => {
-    const currentRotation = group.current.rotation.y;
-    const targetRotation =
-      Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
-
-    group.current.rotateY(-(Math.PI / 2));
-
-    // gsap.to(group.current.rotation, {
-    //   duration: 0.3, // Adjust the duration for the desired speed
-    //   y: targetRotation,
-    //   ease: "linear", // Use linear easing for uniform speed
-    //   onComplete: () => {
-
-    //     console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
-
-    //     setIsPlayerMoving(false);
-    //     updatePlayerUpDirection();
-    //   },
-    // });
-  };
 
   const [rotationTarget, setRotationTarget] = useState(null);
 
-  const turnPlayerUp = () => {
-    if (!isExecuted) {
-      // Get the current Euler rotation of the group
-      const currentRotation = group.current.rotation.clone();
 
-      const G = isMultipleOfPi(currentRotation.y);
-
-      // Calculate the new x rotation taking into account the current y rotation
-      const targetRotationX =
-        Math.round(currentRotation.x / (Math.PI / 2)) * (Math.PI / 2) +
-        Math.PI / 2;
-
-      // Calculate the new y rotation (no change in this case)
-      const targetRotationY = currentRotation.y;
-      const targetRotationZ = currentRotation.z;
-
-      group.current.rotateX(Math.PI / 2);
-      // Apply the new rotation
-      // gsap.to(group.current.rotation, {
-      //     duration: 0.3,
-      //     x: targetRotationX,
-
-      //     ease: "linear",
-      //     onComplete: () => {
-
-      //       console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
-
-      //         updatePlayerUpDirection();
-      //     },
-      // });
-    }
-  };
 
 
 
@@ -233,10 +154,6 @@ export default function Player({ blocks, positions, objects }) {
   //------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------
 
-  const color = useControls({
-    directional_color: "#00ff9f",
-    ambient_color: "#7600ff",
-  });
 
 
   //------------------------------------------------------------------------------------------------------------------
@@ -337,10 +254,11 @@ export default function Player({ blocks, positions, objects }) {
 
   const raycasterForward = new THREE.Raycaster();
   const raycasterDown = new THREE.Raycaster();
+  const raycasterCam = new THREE.Raycaster();
   const arrowHelperForward = useRef();
   const arrowHelperDown = useRef();
   raycasterDown.far = 5; // Set the far property to an appropriate value
-  raycasterForward.far = 5; // Set the far property to an appropriate value
+  raycasterForward.far = 1; // Set the far property to an appropriate value
 
   useEffect(() => {
     if (group.current) {
@@ -391,6 +309,7 @@ export default function Player({ blocks, positions, objects }) {
         .applyQuaternion(group.current.quaternion)
         .normalize();
       raycasterDown.set(position.add(offset), downward);
+
     }
   };
 
@@ -404,17 +323,38 @@ export default function Player({ blocks, positions, objects }) {
   const hightlightObjects = () => {
     const intersectsDown = raycasterDown.intersectObjects(objp, true);
 
+
+  //   const dir = group.current.position
+  //   .clone()
+  //   .sub(camera.position)
+  //   .normalize()
+  
+  // raycasterCam.set(camera.position, dir)
+  // const intersectsCam = raycasterCam.intersectObject(cube)
+  
+  // if (intersectsCam.length > 0) {
+  //   intersectsDown.forEach((intersection, index) => {
+  //     const closestIntersection = intersectsDown[0];
+  //     const object = closestIntersection.object;
+
+  //     object.material.opacity = 0.2;
+
+  //     // Optionally, set a timeout to revert the material back after a certain time
+  //   });
+  // }
+
+
     if (intersectsDown.length > 0) {
       intersectsDown.forEach((intersection, index) => {
-        const closestIntersection = intersectsDown[0]; // Get the first (closest) intersection
-
+        const closestIntersection = intersectsDown[0];
         const object = closestIntersection.object;
 
+      //  console.log(object)
+        if(object.type === 'end'){
+          end();
+        }
         // const { object, faceIndex } = intersection;
-
         const originalMaterial = object.material;
-
-        // Change the material to a highlighted material
         const highlightedMaterial = new THREE.MeshBasicMaterial({
           color: "blue",
         });
@@ -441,37 +381,51 @@ export default function Player({ blocks, positions, objects }) {
 
   // Do this instead -- console.log( raycaster.ray.origin.distanceTo( intersects[0].point ) );
 
-  const moveGroupDownIfIntersecting = () => {
+
+  const moveGroupIfIntersecting = () => {
     if (group.current) {
       // Update the raycaster direction to point downwards relative to the group
       const down = new THREE.Vector3(0, -1, 0).applyQuaternion(
         group.current.quaternion
       );
 
-      // Normalize the direction vector
-      down.normalize();
-
-      // Find the maximum absolute component value
-      const maxComponent = Math.max(
-        Math.abs(down.x),
-        Math.abs(down.y),
-        Math.abs(down.z)
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
+        group.current.quaternion
       );
 
-      // If the maximum component is greater than 1, scale the vector down
-      if (maxComponent > 1) {
-        down.divideScalar(maxComponent);
-      }
+      // Normalize the direction vector
+      down.normalize();
+      forward.normalize();
 
+      // Find the maximum absolute component value
+      const maxComponentDown = Math.max(
+        Math.abs(down.x),
+        Math.abs(down.y),
+        Math.abs(down.z),
+      );
+      const maxComponentForward = Math.max(
+        Math.abs(forward.x),
+        Math.abs(forward.y),
+        Math.abs(forward.z),
+      );
+      // If the maximum component is greater than 1, scale the vector down
+      if (maxComponentDown > 1) {
+        down.divideScalar(maxComponentDown);
+      }
+      if (maxComponentForward > 1) {
+        down.divideScalar(maxComponentForward);
+      }
       //console.log('Clamped down direction:', down);
 
       const position = group.current.position.clone();
 
       // Set the raycaster to start from the group's current position and point downwards
       raycasterDown.set(position, down);
+      raycasterForward.set(position, forward);
 
       // Check for intersections with objects
       const intersectsDown = raycasterDown.intersectObjects(objp, true);
+      const intersectsForward = raycasterForward.intersectObjects(objp, true);
 
       if (intersectsDown.length > 0) {
         setHasHitEdge(false)
@@ -497,9 +451,22 @@ export default function Player({ blocks, positions, objects }) {
         //console.log("No object below the group.");
         turnPlayerDown();
         setHasHitEdge(true)
-
-
       }
+
+      // if (intersectsForward.length > 0) {
+
+      //   turnPlayerUp();
+      //   setHasHitWall(true)
+
+      //   console.log("ray forward:", raycasterForward.ray.direction);
+      //   //console.log("group down:", down);
+      //   //console.log("dist:", dist);
+    
+      // }else{
+      //   setRotationComplete(false);
+
+      // }
+
     }
   };
 
@@ -528,6 +495,7 @@ export default function Player({ blocks, positions, objects }) {
     const cameraPosition = newPosition.clone().add(offset);
     state.camera.position.copy(cameraPosition);
 
+
     // Update camera orientation
     const lookAtPosition = playerPosition.clone();
     state.camera.lookAt(lookAtPosition);
@@ -536,6 +504,7 @@ export default function Player({ blocks, positions, objects }) {
     const groupUpDirection = new THREE.Vector3(0, 1, 0);
     groupUpDirection.applyQuaternion(group.current.quaternion);
     state.camera.up.copy(groupUpDirection);
+    
   };
 
 
@@ -561,15 +530,115 @@ export default function Player({ blocks, positions, objects }) {
 
 
   const turnPlayerDown = () => {
+    setIsMoving(false)
       if(!rotationComplete){
+        
         group.current.rotateX(-Math.PI / 2);
         group.current.quaternion.normalize();
         group.current.up.set(0, 1, 0);
+
         setRotationComplete(true);
         setHasHitEdge(false);
       }
+     playMove();
+      setIsMoving(true)
+
   };
 
+
+
+  const turnPlayerUp = () => {
+    setIsMoving(false)
+      if(!rotationComplete){
+        
+        group.current.rotateX(Math.PI / 2);
+        group.current.quaternion.normalize();
+        group.current.up.set(0, 1, 0);
+
+        setRotationComplete(true);
+        setHasHitWall(false);
+      }
+     playMove();
+      setIsMoving(true)
+
+  };
+
+  // const turnPlayerUp = () => {
+  //   if (!isExecuted) {
+  //     // Get the current Euler rotation of the group
+  //     const currentRotation = group.current.rotation.clone();
+
+  //     const G = isMultipleOfPi(currentRotation.y);
+
+  //     // Calculate the new x rotation taking into account the current y rotation
+  //     const targetRotationX =
+  //       Math.round(currentRotation.x / (Math.PI / 2)) * (Math.PI / 2) +
+  //       Math.PI / 2;
+
+  //     // Calculate the new y rotation (no change in this case)
+  //     const targetRotationY = currentRotation.y;
+  //     const targetRotationZ = currentRotation.z;
+
+  //     group.current.rotateX(Math.PI / 2);
+  //     // Apply the new rotation
+  //     // gsap.to(group.current.rotation, {
+  //     //     duration: 0.3,
+  //     //     x: targetRotationX,
+
+  //     //     ease: "linear",
+  //     //     onComplete: () => {
+
+  //     //       console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
+
+  //     //         updatePlayerUpDirection();
+  //     //     },
+  //     // });
+  //   }
+  // };
+
+
+
+//   const turnPlayerDown = () => {
+
+//     if (!rotationComplete) {
+//         gsap.to({}, {
+//             duration: 1, // duration of the animation in seconds
+//             onUpdate: function() {
+//                 group.current.rotateX(-Math.PI / 2 / 60); // Assuming 60 updates per second
+//                 group.current.quaternion.normalize();
+//             },
+//             onComplete: () => {
+//                 group.current.up.set(0, 1, 0);
+//                 setRotationComplete(true);
+//                 setHasHitEdge(false);
+//             },
+//             ease: "power1.inOut"
+//         });
+//     }
+// };
+
+
+const turnPlayerLeft = () => {
+  const currentRotation = group.current.rotation.y;
+  const targetRotation =
+    Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
+
+  group.current.rotateY(Math.PI / 2);
+  playMove();
+
+};
+
+
+
+const turnPlayerRight = () => {
+  const currentRotation = group.current.rotation.y;
+  const targetRotation =
+    Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
+
+  group.current.rotateY(-(Math.PI / 2));
+  playMove();
+
+};
 
 
 
@@ -582,6 +651,7 @@ export default function Player({ blocks, positions, objects }) {
 
     // Use raycasterDown to check distance to ground
     updateGroupRaycasters();
+    playJump();
 
     // Use opposite direction of raycasterDown to define up direction
     const upDirection = raycasterDown.ray.direction.clone().negate();
@@ -607,22 +677,34 @@ export default function Player({ blocks, positions, objects }) {
         
               // If no intersection, fall back to original position
               gsap.to(group.current.position, { 
-                  x: group.current.position.x, 
+                  x: group.current.position.x , 
                   y: playerPosition.y - 1 * player.current.scale.y, 
-                  z: playerPosition.z, 
+                  z: playerPosition.z - 1 * player.current.scale.z, 
                   duration,
                   ease: "inOut", // Use bounce easing
                   onComplete: () => {
+
+                    // gsap.to(group.current.position, { 
+                    //   x: group.current.position.x, 
+                    //   y: playerPosition.y + 1 * player.current.scale.y, 
+                    //   z: playerPosition.z, 
+
+                    // });
+
+                    playLand();
+
+
                     // Set isMoving back to true after jump is complete
                     if (getKeys().forward) {
                       // Set isMoving back to true after jump is complete only if forward key is down
                       setIsJumping(false);
+                      
                   }
                   },
               });
           
   
-           
+
       } 
   });
 }, []);
@@ -635,7 +717,7 @@ const gsapRef = useRef(null); // Reference to the GSAP animation instance
 const idle = useCallback(() => {
   if (!isMoving) {
     gsapRef.current = gsap.to(group.current.scale, {
-      y: 0.75,
+      y: 0.85,
       duration: 0.7,
       ease: 'power1.inOut',
       repeat: -1,
@@ -664,8 +746,8 @@ useEffect(() => {
     const { forward, leftward, rightward } = getKeys();
     const playerPosition = group.current?.position;
 
-    console.log('is moving: ',isMoving)
-    console.log('has hit edge: ',hasHitEdge)
+    //console.log('is moving: ',isMoving)
+    //console.log('has hit edge: ',hasHitEdge)
     // Define variables for rotation speed and easing
     let rotationSpeed = 0.3; // Base rotation speed
     const maxRotationSpeed = 0.5; // Maximum rotation speed
@@ -685,8 +767,8 @@ useEffect(() => {
 
       setPlayerMove();
       updateGroupRaycasters();
-      hightlightObjects();
-      moveGroupDownIfIntersecting();
+    //  hightlightObjects();
+      moveGroupIfIntersecting();
     } else {
 
  
@@ -699,6 +781,9 @@ useEffect(() => {
 
     // Update camera only if there is movement
     if (isMoving) {
+
+
+
       updateCamera(state);
     }else{
 
@@ -722,20 +807,39 @@ useEffect(() => {
   // // Rotate the ball
   // player.current.rotation.x -= rotationAngle;
 
+
+
   return (
+    <>
+  
+
     <group ref={group}>
+    <RigidBody
+  type="kinematicPosition"
+  ref={body}
+  colliders="cuboid"
+  enabledRotations={[false, true, true]}
+  restitution={1}
+  friction={1}
+  position={[0, 0, 0]}
+>
       <mesh ref={player}>
-        <meshPhongMaterial color="#ff0000" opacity={0.1} transparent />
+        <meshPhongMaterial color="#ff0000" opacity={0.1} transparent  />
         <boxGeometry />
       </mesh>
       <mesh
         ref={player}
         scale={player.scale}
         material={ball.scene.children[0].material}
+        rotation={[0, 0, Math.PI / 2]} // Rotate 90 degrees around the X-axis
+
       >
-        <sphereGeometry args={[0.5, 64, 32]} />
+        <sphereGeometry args={[0.5, 120, 64]} />
       </mesh>
-      <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} />{" "}
+
+      <perspectiveCamera ref={cameraRef} position={[0, 0, 0]} />
+      </RigidBody>
     </group>
+    </>
   );
 }
