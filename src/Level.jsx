@@ -89,11 +89,16 @@ const o = [[0,1,0],[0,0,1],[1,0,0]]
 
 
     /// Top face (y = -1)
+
+    // [0, -1, 0, "start",'c'], 
+    // [0, -1, -1, "cube",'c'],
+    // [0, -1, -2, "cube",'c'],
+    
     [0, -1, 0, "start",'c'], 
     [0, -1, -1, "cube",'c'],
     [0, -1, -2, "cube",'c'],
-    [0, -1, -3, "coin",'c'], 
-    [1, -1, 0, "portal",'c'],
+    [0, -1, -3, "cube",'c'], 
+    [1, -1, 0, "cube",'c'],
     [1, -1, -1, "cube",'c'],
     [1, -1, -2, "cube",'c'],
     [1, -1, -3, "cube",'c'],
@@ -105,7 +110,13 @@ const o = [[0,1,0],[0,0,1],[1,0,0]]
     [-1, -1, -1, "cube",'c'],
     [-1, -1, -2, "cube",'c'],
     [-1, -1, -3, "cube",'c'], 
-    [-2, -1, 0, "end",'c'],
+
+    // end
+    [-2, -1, 0, "cube",'c'],
+    [0, -1, 0, "cube",'c'],
+
+    //
+    
     [-2, -1, -1, "cube",'c'],
     [-2, -1, -2, "cube",'c'],
     [-2, -1, -3, "cube",'c'],
@@ -240,20 +251,7 @@ const { backgroundColor } = useControls({
 });
 
 
-function gradTexture(color) {
-  var c = document.createElement("canvas");
-  var ct = c.getContext("2d");
-  var size = 1024;
-  c.width = 16; c.height = size;
-  var gradient = ct.createLinearGradient(0,0,0,size);
-  var i = color[0].length;
-  while(i--){ gradient.addColorStop(color[0][i],color[1][i]); }
-  ct.fillStyle = gradient;
-  ct.fillRect(0,0,16,size);
-  var texture = new THREE.Texture(c);
-  texture.needsUpdate = true;
-  return texture;
-}
+
 
 
 // function TransparentEnvironment() {
@@ -292,7 +290,6 @@ function gradTexture(color) {
 
 
       {/* <Sky /> */}
-      {/* <color attach="background" args={[backgroundColor]} /> */}
 
        
 {/* <TransparentEnvironment /> */}

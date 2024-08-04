@@ -17,6 +17,8 @@ import {
 import { Perf } from "r3f-perf";
 import { Stats, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { useControls } from "leva";
+
 // Component to add fog to the scene
 const AddFog = () => {
   const { scene } = useThree();
@@ -29,6 +31,9 @@ const AddFog = () => {
   return null;
 };
 
+// const { backgroundColor } = useControls({
+//   backgroundColor: { value: '#f9beff', label: 'World Background Color' },
+// });
 
 
 function MainComponent() {
@@ -55,6 +60,7 @@ function MainComponent() {
         // }}
       >
                 {/* <AddFog /> */}
+                {/* <color attach="background" args={['pink']} /> */}
 
         <Experience />
         <Stats />

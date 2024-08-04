@@ -15,15 +15,15 @@ export default function BlockCoin({
   const coin = useGLTF("./coin.glb");
   const coinRef = useRef();
 
-  useEffect(() => {
-    // GSAP animation for rotation
-    gsap.to(coinRef.current.rotation, {
-      z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
-      repeat: -1, // Infinite repeat
-      ease: "none", // Linear easing
-      duration: 5, // Duration in seconds for one complete rotation
-    });
-  }, []);
+  // useEffect(() => {
+  //   // GSAP animation for rotation
+  //   gsap.to(coinRef.current.rotation, {
+  //     z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
+  //     repeat: -1, // Infinite repeat
+  //     ease: "none", // Linear easing
+  //     duration: 5, // Duration in seconds for one complete rotation
+  //   });
+  // }, []);
 
   return (
     <group position={position}>

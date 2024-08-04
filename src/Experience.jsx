@@ -5,7 +5,6 @@ import Level from "./Level.jsx";
 import useGame from "./stores/useGame.jsx";
 
 export default function Experience() {
-  const bgMesh = useRef();
 
   const blocksCount = useGame((state) => state.blocksCount);
   const blocksSeed = useGame((state) => state.blocksSeed);

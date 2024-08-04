@@ -15,15 +15,15 @@ export default function BlockKey({
   const key = useGLTF("./key.glb");
   const keyRef = useRef();
 
-  useEffect(() => {
-    // GSAP animation for rotation
-    gsap.to(keyRef.current.rotation, {
-      z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
-      repeat: -1, // Infinite repeat
-      ease: "none", // Linear easing
-      duration: 5, // Duration in seconds for one complete rotation
-    });
-  }, []);
+  // useEffect(() => {
+  //   // GSAP animation for rotation
+  //   gsap.to(keyRef.current.rotation, {
+  //     z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
+  //     repeat: -1, // Infinite repeat
+  //     ease: "none", // Linear easing
+  //     duration: 5, // Duration in seconds for one complete rotation
+  //   });
+  // }, []);
 
 
 

@@ -6,8 +6,8 @@ export default function Lights()
     const light = useRef()
     
     const world_light = useControls({
-        directional_color: '#ff00d2',
-        ambient_color: '#d3acff',
+        directional_color: '#feffa6',
+        ambient_color: '#a3b0ff',
         ambient_intensity:1,
       })
 

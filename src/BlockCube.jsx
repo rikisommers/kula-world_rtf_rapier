@@ -16,7 +16,7 @@ export default function BlockCube({
   const coin = useGLTF("./coin.glb");
   const coinRef = useRef();
 
-  const cube = useGLTF("./cube1.glb");
+  const cube = useGLTF("./cube/cube-flat.glb");
   cube.scene.traverse(function (node) {
     if (node.isMesh) {
       node.receiveShadow = true;
@@ -24,18 +24,18 @@ export default function BlockCube({
   });
 
 
-  useEffect(() => {
-    if(coinRef.current){
-    // GSAP animation for rotation
-    gsap.to(coinRef.current.rotation, {
-      z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
-      repeat: -1, // Infinite repeat
-      ease: "none", // Linear easing
-      duration: 5, // Duration in seconds for one complete rotation
-    });
+  // useEffect(() => {
+  //   if(coinRef.current){
+  //   // GSAP animation for rotation
+  //   gsap.to(coinRef.current.rotation, {
+  //     z: "+=6.28319", // Rotate 360 degrees (2 * Math.PI in radians)
+  //     repeat: -1, // Infinite repeat
+  //     ease: "none", // Linear easing
+  //     duration: 5, // Duration in seconds for one complete rotation
+  //   });
 
-  }
-  }, []);
+  // }
+  // }, []);
 
 
   console.log(material)
@@ -58,25 +58,29 @@ const coinMaterial = new THREE.MeshStandardMaterial({ color: '#000' })
   //   './Concrete_018_AmbientOcclusion.jpg'
   // ]);
 
-  const map = new THREE.TextureLoader().load( './rock-color.png' );
+  const map = new THREE.TextureLoader().load( './cube/tile2.jpg' );
   map.wrapS = map.wrapT = THREE.RepeatWrapping;
   map.colorSpace = THREE.SRGBColorSpace;
-  map.repeat.set(0.25, 0.25);  // 
+  // /map.repeat.set(0.2, 1);  // 
     
-  const normalMap = new THREE.TextureLoader().load( './rock-normal.png' );
-  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  const normalMap = new THREE.TextureLoader().load( './cube/tile2-normal.jpg' );
+  map.wrapS = map.wrapT = THREE.RepeatWrapping
   map.colorSpace = THREE.SRGBColorSpace;
   map.repeat.set(0.25, 0.25);  // 
 
 
-  const roughnessMap = new THREE.TextureLoader().load( './rock-bump.png' );
+  const roughnessMap = new THREE.TextureLoader().load( './cube/tile1-bump.jpg' );
   map.wrapS = map.wrapT = THREE.RepeatWrapping;
   map.colorSpace = THREE.SRGBColorSpace;
   map.repeat.set(0.25, 0.25);  // 
  // Adjust texture properties
- const myMaterial = new THREE.MeshPhongMaterial( { map: map, side: THREE.DoubleSide } );
+ const myMaterial = new THREE.MeshPhongMaterial( { map: normalMap, side: THREE.DoubleSide } );
 
-
+ const transparentMaterial = new THREE.MeshBasicMaterial({
+  color: 'blue',
+  transparent: true,
+  opacity: 0,
+});
 
   // const material = new THREE.MeshPhysicalMaterial({  
   //   displacementMap: displacementMap,
@@ -102,8 +106,6 @@ const coinMaterial = new THREE.MeshStandardMaterial({ color: '#000' })
         material={myMaterial}
         position={[0, 1.2, 0]}
         rotation={[1.5,0,0]}
-        receiveShadow // Add this line to enable shadow reception
-        castShadow // Add this line to enable casting shadows
         object={coin.scene.clone()} // Clone the scene for each instance
         scale={0.3}
         ref={coinRef} // Reference to the mesh for GSAP animation
@@ -120,8 +122,6 @@ const coinMaterial = new THREE.MeshStandardMaterial({ color: '#000' })
     case 'e':
       childElement = (
         <primitive
-          receiveShadow // Add this line to enable shadow reception
-          castShadow // Add this line to enable casting shadows
           object={cube.scene.clone()} // Clone the scene for each instance
           scale={0.5}
         />
@@ -129,19 +129,17 @@ const coinMaterial = new THREE.MeshStandardMaterial({ color: '#000' })
       break;
     case 'c':
       childElement = (
-        <meshPhongMaterial 
-          map={map}
+        <primitive
+          object={cube.scene.clone()} // Clone the scene for each instance
+          scale={0.5}
         />
       );
       break;
     case 'g':
       childElement = (
-        <meshPhysicalMaterial 
-          normalScale={5}
-          roughness={0.7}   
-          transmission={1}  
-          thickness={1}
-          polygonOffset={0}
+        <primitive
+          object={cube.scene.clone()} // Clone the scene for each instance
+          scale={0.5}
         />
       );
       break;
@@ -159,12 +157,13 @@ const coinMaterial = new THREE.MeshStandardMaterial({ color: '#000' })
 
 
 {coinElement}
+  
 
-      <mesh geometry={boxGeometry}   name="floor">
-        
+      <mesh geometry={boxGeometry} material={transparentMaterial}   name="floor">
       {childElement}
-
-      </mesh>
+     
+      </mesh> 
+    
     </group>
   );
 }

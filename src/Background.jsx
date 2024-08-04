@@ -53,7 +53,7 @@ export default function Background() {
 {/* <TransparentEnvironment /> */}
 {/* <Environment preset="forest" background blur={0.1}  /> */}
 
-
+   <Sky />
     <Suspense fallback={null}>
           <Cloud position={[-4, -2, -25]} speed={0.2} opacity={1} />
           {/* <Cloud position={[4, 2, -15]} speed={0.2} opacity={0.5} />

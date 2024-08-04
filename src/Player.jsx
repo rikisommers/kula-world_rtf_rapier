@@ -197,7 +197,7 @@ export default function Player({ blocks, positions, objects }) {
           setMovementState(MovementState.FORWARD);
           //console.log("direction:", livePlayerDirection);
         } else {
-          setIsMoving(false);
+          //setIsMoving(false);
         }
       }
     );
@@ -533,14 +533,40 @@ export default function Player({ blocks, positions, objects }) {
     setIsMoving(false)
       if(!rotationComplete){
         
-        group.current.rotateX(-Math.PI / 2);
-        group.current.quaternion.normalize();
-        group.current.up.set(0, 1, 0);
+        // group.current.rotateX(-Math.PI / 2);
+        // group.current.quaternion.normalize();
+        // group.current.up.set(0, 1, 0);
 
+        const currentRotation = group.current.rotation.x;
+        const targetRotation = currentRotation + Math.PI / 2; // Calculate target rotation
+      
+        gsap.to(group.current.rotation, {
+          x: targetRotation, 
+          duration: 0.3, 
+          ease: 'power1.inOut',
+          onUpdate: () => {
+            // Update camera position based on player's rotation
+            // const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+            // offset.applyQuaternion(group.current.quaternion); // Apply player's quaternion rotation to the offset
+            // const cameraPosition = group.current.position.clone().add(offset); // Calculate camera position
+            // state.camera.position.copy(cameraPosition); // Update camera position
+          },
+          onComplete: () => {
+    
+            //group.current.updateMatrix();
+            // group.current.position.set( 0, 0, 0 );
+            // group.current.rotation.set( 0, 0, 0 );
+            group.current.updateMatrix4();
+            group.current.quaternion.normalize();
+
+            // Optional: Perform any actions after animation completes
+          },
+        });
+        
         setRotationComplete(true);
         setHasHitEdge(false);
       }
-     playMove();
+     //playMove();
       setIsMoving(true)
 
   };
@@ -551,82 +577,77 @@ export default function Player({ blocks, positions, objects }) {
     setIsMoving(false)
       if(!rotationComplete){
         
-        group.current.rotateX(Math.PI / 2);
-        group.current.quaternion.normalize();
-        group.current.up.set(0, 1, 0);
+        // group.current.rotateX(Math.PI / 2);
+        // group.current.quaternion.normalize();
+        // group.current.up.set(0, 1, 0);
+        const currentRotation = group.current.rotation.x;
+        const targetRotation = currentRotation + Math.PI / 2; // Calculate target rotation
+      
+        gsap.to(group.current.rotation, {
+          x: targetRotation, 
+          duration: 0.3, 
+          ease: 'power1.inOut',
+          onUpdate: () => {
+            // Update camera position based on player's rotation
+            // const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+            // offset.applyQuaternion(group.current.quaternion); // Apply player's quaternion rotation to the offset
+            // const cameraPosition = group.current.position.clone().add(offset); // Calculate camera position
+            // state.camera.position.copy(cameraPosition); // Update camera position
+          },
+          onComplete: () => {
+    
+            //group.current.updateMatrix();
+            // group.current.position.set( 0, 0, 0 );
+            // group.current.rotation.set( 0, 0, 0 );
+            group.current.updateMatrix4();
+            group.current.quaternion.normalize();
 
+            // Optional: Perform any actions after animation completes
+          },
+        });
+        
         setRotationComplete(true);
         setHasHitWall(false);
       }
-     playMove();
+    //  playMove();
       setIsMoving(true)
 
   };
 
-  // const turnPlayerUp = () => {
-  //   if (!isExecuted) {
-  //     // Get the current Euler rotation of the group
-  //     const currentRotation = group.current.rotation.clone();
-
-  //     const G = isMultipleOfPi(currentRotation.y);
-
-  //     // Calculate the new x rotation taking into account the current y rotation
-  //     const targetRotationX =
-  //       Math.round(currentRotation.x / (Math.PI / 2)) * (Math.PI / 2) +
-  //       Math.PI / 2;
-
-  //     // Calculate the new y rotation (no change in this case)
-  //     const targetRotationY = currentRotation.y;
-  //     const targetRotationZ = currentRotation.z;
-
-  //     group.current.rotateX(Math.PI / 2);
-  //     // Apply the new rotation
-  //     // gsap.to(group.current.rotation, {
-  //     //     duration: 0.3,
-  //     //     x: targetRotationX,
-
-  //     //     ease: "linear",
-  //     //     onComplete: () => {
-
-  //     //       console.log('IS LEFT OR RIGHT: ', isMultipleOfPi(targetRotation))
-
-  //     //         updatePlayerUpDirection();
-  //     //     },
-  //     // });
-  //   }
-  // };
 
 
+  const turnPlayerLeft = (state) => {
+    const currentRotation = group.current.rotation.y;
+    const targetRotation = currentRotation + Math.PI / 2; // Calculate target rotation
+  
 
-//   const turnPlayerDown = () => {
+    // group.current.rotateY(Math.PI / 2);
 
-//     if (!rotationComplete) {
-//         gsap.to({}, {
-//             duration: 1, // duration of the animation in seconds
-//             onUpdate: function() {
-//                 group.current.rotateX(-Math.PI / 2 / 60); // Assuming 60 updates per second
-//                 group.current.quaternion.normalize();
-//             },
-//             onComplete: () => {
-//                 group.current.up.set(0, 1, 0);
-//                 setRotationComplete(true);
-//                 setHasHitEdge(false);
-//             },
-//             ease: "power1.inOut"
-//         });
-//     }
-// };
+    gsap.to(group.current.rotation, {
+      y: targetRotation, 
+      duration: 0.3, 
+      ease: 'power1.inOut',
+      onUpdate: () => {
+        // Update camera position based on player's rotation
+        // const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+        // offset.applyQuaternion(group.current.quaternion); // Apply player's quaternion rotation to the offset
+        // const cameraPosition = group.current.position.clone().add(offset); // Calculate camera position
+        // state.camera.position.copy(cameraPosition); // Update camera position
+      },
+      onComplete: () => {
 
-
-const turnPlayerLeft = () => {
-  const currentRotation = group.current.rotation.y;
-  const targetRotation =
-    Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 2;
-
-  group.current.rotateY(Math.PI / 2);
-  playMove();
-
-};
+        // group.current.updateMatrix();
+        // group.current.position.set( 0, 0, 0 );
+        // group.current.rotation.set( 0, 0, 0 );
+        // group.current.updateMatrix();
+        group.current.updateMatrix4();
+        group.current.quaternion.normalize();
+        // Optional: Perform any actions after animation completes
+      },
+    });
+  
+   
+  };
 
 
 
@@ -635,8 +656,33 @@ const turnPlayerRight = () => {
   const targetRotation =
     Math.round(currentRotation / (Math.PI / 2)) * (Math.PI / 2) - Math.PI / 2;
 
-  group.current.rotateY(-(Math.PI / 2));
-  playMove();
+  //group.current.rotateY(-(Math.PI / 2));
+
+  gsap.to(group.current.rotation, {
+    y: targetRotation, 
+    duration: 0.3, 
+    ease: 'power1.inOut',
+    onUpdate: () => {
+      // Update camera position based on player's rotation
+      // const offset = new THREE.Vector3(0, 1.5, 4); // Offset behind and slightly above the player
+      // offset.applyQuaternion(group.current.quaternion); // Apply player's quaternion rotation to the offset
+      // const cameraPosition = group.current.position.clone().add(offset); // Calculate camera position
+      // state.camera.position.copy(cameraPosition); // Update camera position
+    },
+    onComplete: () => {
+      // Optional: Perform any actions after animation completes
+      // group.current.updateMatrix();
+      // group.current.position.set( 0, 0, 0 );
+      // group.current.rotation.set( 0, 0, 0 );
+      // group.current.updateMatrix();
+      group.current.updateMatrix4();
+      group.current.quaternion.normalize();
+
+    },
+  });
+
+
+  // playMove();
 
 };
 
@@ -762,6 +808,9 @@ useEffect(() => {
       //   ease: 'power1.inOut', // Easing function for smooth animation
       // });
 
+
+
+
       rotationSpeed += acceleration * delta; // Accelerate rotation
       rotationSpeed = Math.min(rotationSpeed, maxRotationSpeed); // Cap rotation speed
 
@@ -784,10 +833,11 @@ useEffect(() => {
 
 
 
-      updateCamera(state);
     }else{
 
     }
+    updateCamera(state);
+
 
     // FAKE -- Calculate distance moved
     if (forward) {
